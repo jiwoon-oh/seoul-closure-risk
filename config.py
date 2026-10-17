@@ -300,3 +300,38 @@ def nn_match(df, caliper_mult=0.2, replace=False, seed=SEED, exact="기준_년�
                 pairs.append((ti, cidx[best]))
 
     return pd.DataFrame(pairs, columns=["t_idx", "c_idx"]), cal
+
+
+def tie_random_precision(score, y, ks, rng, reps=200):
+    """점수 내림차순 top-K 정밀도를, 같은 점수끼리만 무작위로 섞어 reps 번 계산한다. 반환 (reps, len(ks)).
+    점포 수처럼 동점이 많은 점수는 '누가 먼저 뽑히는가'가 임의이므로 결정적 한 번의 값 대신 분포로 본다."""
+    import numpy as np
+    score = np.asarray(score, dtype=float)
+    y = np.asarray(y, dtype=float)
+    ks = np.asarray(ks, dtype=int)
+    n = len(score)
+    out = np.empty((reps, len(ks)))
+    for r in range(reps):
+        order = np.lexsort((rng.random(n), -score))      # 1순위 -점수, 2순위 무작위 (동점 안에서만 섞임)
+        cs = np.cumsum(y[order])
+        out[r] = cs[ks - 1] / ks
+    return out
+
+
+def tie_report(score, ks, name):
+    """점수의 동점 현황과, 각 K 경계에서 동점 묶음이 잘리는지 보고한다."""
+    import numpy as np
+    import pandas as pd
+    score = np.asarray(score, dtype=float)
+    vals, cnt = np.unique(score, return_counts=True)
+    base = {"점수": name, "칸수": len(score), "고유값 수": len(vals),
+            "동점 칸 수": int(cnt[cnt > 1].sum()), "최대 동점 크기": int(cnt.max())}
+    desc = np.sort(score)[::-1]
+    rows = []
+    for K in ks:
+        thr = desc[K - 1]
+        tie_n = int((score == thr).sum())
+        taken = int(K - (score > thr).sum())
+        rows.append({**base, "K": K, "경계 동점 칸수": tie_n, "그중 선택": taken,
+                     "경계가 동점을 자름": tie_n > taken})
+    return pd.DataFrame(rows)
