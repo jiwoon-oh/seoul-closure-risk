@@ -171,6 +171,8 @@ I checked standardized mean differences (SMD) before interpreting the outcomes:
 
 Changing calipers, resampling choices, and random seeds across **9 sensitivity settings** produced ATT values roughly between **−5.8 and −4.1 pp**. The overall negative sign was not driven by one arbitrary setting.
 
+![Estimated gap in net-decline rate: raw comparison +2.38 points, then propensity matching −5.57, doubly robust −6.00, counterfactual simulation −6.01 and alternative label −8.71.](images/gap-reversal.png)
+
 Doubly robust methods can help under their modeling assumptions, but a close result between estimators **does not establish that all confounding has been removed**. Clustering or bootstrapping at the commercial-area level is also important because several sector cells from one area may be related.
 
 #### Only comparable cells were included
@@ -192,6 +194,8 @@ I divided the **7,043 matched pairs** into store-count quintiles.
 - Woolf homogeneity test: `Q = 79.786`, `df = 4`, `p < 0.0001`.
 
 The stratum-specific odds ratios were not compatible with a single common effect. Among small cells, Korean restaurants had markedly lower observed net decline than their matched peers. The three smallest strata are clearly negative (95% intervals exclude zero); from about 20 stores (Q4) the interval includes zero, and in the largest stratum (Q5) the point estimate is +1.8 pp with an interval from −1.4 to +5.1 pp.
+
+![Stratum ATT by store-count quintile: −13.6, −10.3, −4.9, −0.9 and +1.8 percentage points, with 95% intervals. The 3 smallest quintiles are clearly negative; the intervals of the other 2 include zero.](images/strata-att.png)
 
 These are **stratified comparisons of the actual matched pairs**. They should not be mixed with the modeled dose-response or counterfactual exercise below, which changes covariate values in a fitted model.
 
@@ -354,6 +358,8 @@ Among the first **50 cells**, 78% of the model's selected cells had the evaluate
 
 As K increases, the lists become more similar and precision converges: at K = 200 the gap is already small (0.545 versus 0.520), and by K = 2,000 it is 0.396 versus 0.384. This is why I evaluated the model at concrete operating points rather than treating one overall classification metric as the business result.
 
+![Precision among the top-K flagged cells for the model and a store-count rule against the 26.0% positive rate. The model starts at 0.780 against 0.380 at K = 50, and the gap is small by K = 200 (0.545 against 0.520).](images/operating-point.png)
+
 #### Does the model still help within similar-sized cells?
 
 A high store-count cell can have a high baseline rate of any opening/closure event. Ranking by store count alone can therefore look effective even without much additional information. I divided cells into store-count quintiles and compared the models within each stratum.
@@ -367,6 +373,8 @@ A high store-count cell can have a high baseline rate of any opening/closure eve
 | Q5 | 64.5 | 43.7% | **1.166** | 1.08 (1.07–1.08) |
 
 The model's lift was above the rule's 95% range in all five size strata; its average advantage was 0.53, 0.27 and 0.29 in the three smallest strata but only about 0.09 in the two largest. In the smallest stratum the comparison was **1.55 versus 1.02 (0.73–1.34)** for the store-count rule; in the largest it was 1.17 versus 1.08. This covers a single validation quarter and does not include sampling error in the model's lift. Overall closure-count AUC improved only **0.705 → 0.711 (+0.006)** over store count, but the advantage was more pronounced when selecting small lists and comparing areas of similar size.
+
+![Lift within store-count quintiles: model 1.55, 1.45, 1.48, 1.25, 1.17 against store-count rule 1.02, 1.18, 1.19, 1.16, 1.08 (mean over random tie orders, with 2.5–97.5% ranges), relative to 1.0 for random selection.](images/size-strata-lift.png)
 
 Care is needed not to mix evaluation setups. The **net-decline AUC (0.669)**, the **closure-count task's AUC (0.711)**, and **top-K precision (0.780)** summarize different targets or decisions and are not interchangeable measures.
 
@@ -399,6 +407,8 @@ I scored cells using **2026 Q1 features** to estimate conditions in **2026 Q2**.
 | Beer and casual pubs | **4.02%** | 3.97–4.07 | 0.23 | 4th |
 
 Korean restaurants ranked **first** by predicted probability of net decline but only **tenth (last)** by predicted closures relative to the number of stores. The two sector rankings had correlation **−0.370**. A sector can look risky on one metric and relatively less risky on another because the metrics answer different questions.
+
+![Predicted closures per 100 stores for 2026 Q2 by food category, with 95% intervals. Korean restaurants are lowest at 3.98% (10th of 10 on closure rate) but 1st on net-decline rank.](images/forecast.png)
 
 These closure rates and intervals are **model estimates**, not realized 2026 Q2 measurements. Narrow intervals do not capture every possible model misspecification or future distribution shift.
 
