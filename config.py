@@ -10,6 +10,9 @@ for p in (RAW, PROC, FIG):
 
 ENCODING = "cp949"
 
+# 재현성: 모든 난수(부트스트랩·순열·매칭 셔플·모델)는 이 시드 하나에서 나온다.
+SEED = 42
+
 # ── 파일 탐색 ──────────────────────────────────
 # 실제 파일명 패턴: "서울시 상권분석서비스(점포-상권)_2023년.csv"
 # 공백/밑줄 표기가 파일마다 섞여 있어 정규화 후 비교한다.
@@ -226,3 +229,74 @@ def set_korean_font():
         print("[경고] 한글 폰트를 찾지 못했습니다.")
     plt.rcParams["axes.unicode_minus"] = False
     plt.rcParams["figure.dpi"] = 110
+
+
+# ── 재현성 도구 ────────────────────────────────
+# 동점이 있을 때 행 순서에 따라 결과가 달라지지 않도록, 동점은 아래 키 순서로 가른다.
+TIE_KEYS = ["상권_코드", "서비스_업종_코드", "분기idx"]
+
+
+def stable_rank(frame, col, keys=None):
+    """col 기준 1..n 순위. 동점은 keys 순서로 가른다 (rank(method="first") 는 행 순서를 따라가서 쓰지 않는다)."""
+    import numpy as np
+    import pandas as pd
+    assert frame.index.is_unique, "인덱스가 유일해야 합니다"
+    ks = [k for k in (TIE_KEYS if keys is None else keys) if k in frame.columns]
+    order = frame.sort_values([col] + ks, kind="mergesort").index
+    r = pd.Series(np.arange(1, len(frame) + 1, dtype=float), index=order).reindex(frame.index)
+    return r.where(frame[col].notna())
+
+
+def rank_order(score, frame, keys=None):
+    """점수 내림차순 위치 배열. 점수가 같으면 keys 순서로 가른다 (np.argsort(-score) 의 동점 순서는 불안정하다)."""
+    import numpy as np
+    ks = [k for k in (TIE_KEYS if keys is None else keys) if k in frame.columns]
+    tmp = frame[ks].reset_index(drop=True).assign(_s=-np.asarray(score, dtype=float))
+    return tmp.sort_values(["_s"] + ks, kind="mergesort").index.to_numpy()
+
+
+def nn_match(df, caliper_mult=0.2, replace=False, seed=SEED, exact="기준_년분기_코드"):
+    """logit(PS) 기준 1:1 최근접 매칭. (처리 index, 대조 index) 쌍과 캘리퍼를 반환. STEP 6·9 공용."""
+    import numpy as np
+    import pandas as pd
+    cal = caliper_mult * df["logit_ps"].std()
+    pairs = []
+    keys = [k for k in TIE_KEYS if k in df.columns]
+    if exact is None:
+        groups = [(None, df)]
+    elif isinstance(exact, (list, tuple)):
+        groups = df.groupby(list(exact))
+    else:
+        groups = df.groupby(exact)
+
+    for _, sub in groups:
+        if keys:
+            sub = sub.sort_values(keys, kind="mergesort")      # 셔플 입력 순서를 행 순서와 무관하게 고정
+        tr = sub[sub["처리"] == 1].sample(frac=1, random_state=seed)
+        ct = sub[sub["처리"] == 0]
+        if len(ct) == 0:
+            continue
+        cl, cidx = ct["logit_ps"].to_numpy(), ct.index.to_numpy()
+        order = np.argsort(cl, kind="stable"); cl, cidx = cl[order], cidx[order]
+        used = np.zeros(len(cl), bool)
+
+        for ti, tv in zip(tr.index, tr["logit_ps"].to_numpy()):
+            pos = np.searchsorted(cl, tv)
+            l, r, best = pos - 1, pos, -1
+            while l >= 0 or r < len(cl):          # 삽입 위치에서 좌우로 확장
+                dl = tv - cl[l] if l >= 0      else np.inf
+                dr = cl[r] - tv if r < len(cl) else np.inf
+                if min(dl, dr) > cal:             # 캘리퍼 밖 → 포기
+                    break
+                if dl <= dr:
+                    if replace or not used[l]: best = l; break
+                    l -= 1
+                else:
+                    if replace or not used[r]: best = r; break
+                    r += 1
+            if best >= 0:
+                if not replace:
+                    used[best] = True
+                pairs.append((ti, cidx[best]))
+
+    return pd.DataFrame(pairs, columns=["t_idx", "c_idx"]), cal
