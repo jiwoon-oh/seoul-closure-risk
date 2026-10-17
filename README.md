@@ -12,17 +12,17 @@ Korean restaurants initially appeared to have a higher next-quarter net-decline 
 |---|---|---|
 | Unadjusted net-decline rate | Korean restaurants **25.3%** versus others **22.9%** | Initial gap: +2.4 percentage points |
 | Selecting the highest-ranked sector | Permutation **p = 0.344** | The apparent leader was not robust to selection uncertainty |
-| Matched average difference | **−5.77 pp**, 95% CI **[−7.23, −4.23]** | Applies to comparable, successfully matched cells |
-| Other estimators | Doubly robust **−6.15**, counterfactual **−5.79**, alternative label **−8.73 pp** | The estimated mean direction remained negative |
-| Difference by matched size stratum | **−13.0 pp** in small cells to **+2.4 pp** in large cells | The mean hides meaningful heterogeneity |
+| Matched average difference | **−5.57 pp**, 95% CI **[−7.08, −4.17]** | Applies to comparable, successfully matched cells |
+| Other estimators | Doubly robust **−6.00**, counterfactual **−6.01**, alternative label **−8.71 pp** | The estimated mean direction remained negative |
+| Difference by matched size stratum | **−13.6 pp** in the smallest stratum to **+1.8 pp** in the largest; the three smallest strata are clearly negative, while the two largest have intervals that include zero | The mean hides meaningful heterogeneity |
 | Predictors of next-quarter net decline | `log(store_count)` AME **+14.28 pp**; `log(foot_traffic)` **+0.72 pp**, `p = 0.078` | The label is partly driven by event opportunities |
-| Rolling net-decline prediction | **AUC 0.666 ± 0.010** | Modest discrimination, not highly accurate individual prediction |
-| Closure-count operating evaluation | Top-50 precision **0.760**, store-count rule **0.380** | Larger advantage in limited-budget selection than overall AUC suggests |
+| Rolling net-decline prediction | **AUC 0.666 ± 0.011** | Modest discrimination, not highly accurate individual prediction |
+| Closure-count operating evaluation | Top-50 precision **0.780**, store-count rule **0.380** | Larger advantage in limited-budget selection than overall AUC suggests |
 | 2026 Q2 deliverable | Scores for **2,737 neighborhood commercial-area cells** | Forecasts, not observed Q2 outcomes |
 
-**I marked H2 as partly supported, with a different direction from the prediction.** The original hypothesis expected the positive Korean-restaurant gap to narrow after matching store count and foot traffic. It instead shifted from +2.4 pp to −5.77 pp. Confounding was important, but the directional hypothesis was not met.
+**I marked H2 as partly supported, with a different direction from the prediction.** The original hypothesis expected the positive Korean-restaurant gap to narrow after matching store count and foot traffic. It instead shifted from +2.4 pp to −5.57 pp. Confounding was important, but the directional hypothesis was not met.
 
-The −5.77 pp value should never be presented as one fixed effect for all Korean restaurants. Store-count strata show different directions. Also, matching cannot eliminate unobserved factors such as rent, proprietor experience, and access to capital, so the comparison is not proof that changing restaurant category would cause the reported change.
+The −5.57 pp value should never be presented as one fixed effect for all Korean restaurants. Store-count strata show different directions. Also, matching cannot eliminate unobserved factors such as rent, proprietor experience, and access to capital, so the comparison is not proof that changing restaurant category would cause the reported change.
 
 ---
 
@@ -50,7 +50,7 @@ I also explored whether a **commercial area × sector** risk score could be more
 
 ### 3.1 Source, coverage, and unit of analysis
 
-I combined Seoul Open Data commercial-area tables for **stores, estimated sales, commercial-area boundaries, street-level pedestrian traffic, and visitor-attracting facilities**. The observation window ran from **2023 Q1 to 2026 Q1 (13 quarters)** and covered **10 food-service categories**. Seoul's official commercial-area change indicator was used separately for an external benchmark and a candidate-feature review.
+I combined Seoul Open Data commercial-area tables for **stores, estimated sales, commercial-area boundaries, street-level pedestrian traffic, and visitor-attracting facilities**. The observation window ran from **2023 Q1 to 2026 Q1 (13 quarters; 12 with next-quarter labels)** and covered **10 food-service categories**. Seoul's official commercial-area change indicator was used separately for an external benchmark and a candidate-feature review.
 
 I use the word **cell** for one `commercial area × food-service category × quarter` combination. A cell is an aggregate; it is not an individual business.
 
@@ -146,7 +146,7 @@ I ran **1,000 label permutations**, retaining sector sample sizes and measuring 
 | Estimated selection component on Korean-versus-others scale | **+2.10 pp** |
 | Remaining raw gap after that adjustment | **+0.29 pp** |
 
-Approximately **88%** of the unadjusted gap was comparable to the selection effect from choosing a winner among 10 categories. The evidence did not support a firm claim that Korean restaurants were intrinsically the riskiest.
+Approximately **88%** of the observed top-sector lead (+1.49 of +1.70 pp) was comparable to the selection effect from choosing a winner among 10 categories. The evidence did not support a firm claim that Korean restaurants were intrinsically the riskiest.
 
 A simple split by store-count bands also changed the picture: before matching, Korean restaurants had lower net-decline rates within every broad size band, with an average within-band gap around **−5.3 pp**. This resembled Simpson's paradox. But size-band comparisons still leave differences in other characteristics, so I did not treat them as equivalent to the matched analysis below.
 
@@ -156,42 +156,42 @@ For H2 I treated Korean-restaurant cells as the focus group and other food-servi
 
 I checked standardized mean differences (SMD) before interpreting the outcomes:
 
-- Store-count SMD: **1.00 → 0.037**, a **96.3%** reduction
+- Store-count SMD: **1.00 → 0.044**, a **95.6%** reduction
 - All four matching covariates had `|SMD| < 0.1` after matching
-- **7,042 matched pairs**
+- **7,043 matched pairs**
 - **70.7%** match rate for the focus group
 
 | Method | Difference | Supporting statistic |
 |---|---:|---|
-| Unmatched raw comparison | **+2.4 pp** | Permutation p = 0.344 |
-| **Propensity-score matched ATT** | **−5.77 pp** | 95% CI **[−7.23, −4.23]**, McNemar `p = 5.0×10⁻¹⁵` |
-| Doubly robust estimate | **−6.15 pp** | Matching plus outcome-model adjustment |
-| Counterfactual simulation | **−5.79 pp** | All four covariates held equal in the fitted model |
-| Alternative outcome: next-quarter closure rate | **−8.73 pp** | Direction remains negative |
+| Unmatched raw comparison | **+2.4 pp** | Raw gap before matching, Korean restaurants versus the other nine sectors |
+| **Propensity-score matched ATT** | **−5.57 pp** | 95% CI **[−7.08, −4.17]**, McNemar `p = 2.9×10⁻¹⁴` |
+| Doubly robust estimate | **−6.00 pp** | Matching plus outcome-model adjustment |
+| Counterfactual simulation | **−6.01 pp** | All four covariates held equal in the fitted model |
+| Alternative outcome: next-quarter closure rate | **−8.71 pp** | Direction remains negative |
 
-Changing calipers, resampling choices, and random seeds across **10 sensitivity settings** produced ATT values roughly between **−6.0 and −4.0 pp**. The overall negative sign was not driven by one arbitrary setting.
+Changing calipers, resampling choices, and random seeds across **9 sensitivity settings** produced ATT values roughly between **−5.8 and −4.1 pp**. The overall negative sign was not driven by one arbitrary setting.
 
 Doubly robust methods can help under their modeling assumptions, but a close result between estimators **does not establish that all confounding has been removed**. Clustering or bootstrapping at the commercial-area level is also important because several sector cells from one area may be related.
 
 #### Only comparable cells were included
 
-Around **29.3%** of Korean-restaurant cells, disproportionately including very large cells, did not have an appropriate comparison. The **−5.77 pp** estimate therefore summarizes matched, comparable cells and should not be generalized to every Korean-restaurant area.
+Around **29.3%** of Korean-restaurant cells, disproportionately including very large cells, did not have an appropriate comparison. The **−5.57 pp** estimate therefore summarizes matched, comparable cells and should not be generalized to every Korean-restaurant area.
 
 #### Does the matched average hide differences by size? Yes
 
-I divided the **7,042 matched pairs** into store-count quintiles.
+I divided the **7,043 matched pairs** into store-count quintiles.
 
-| Quintile | Matched pairs | Mean stores | Korean-restaurant net decline | Other-sector net decline | Difference (ATT) | Odds ratio |
-|---|---:|---:|---:|---:|---:|---:|
-| Q1 | 1,409 | 5.9 | 12.5% | 25.5% | **−13.0 pp** | 0.42 |
-| Q2 | 1,408 | 8.7 | 16.4% | 26.8% | **−10.4 pp** | 0.54 |
-| Q3 | 1,408 | 12.8 | 22.1% | 28.7% | **−6.6 pp** | 0.70 |
-| Q4 | 1,408 | 19.6 | 27.9% | 29.2% | **−1.3 pp** | 0.94 |
-| Q5 | 1,409 | 38.5 | 36.5% | 34.1% | **+2.4 pp** | 1.11 |
+| Quintile | Matched pairs | Mean stores | Korean-restaurant net decline | Other-sector net decline | Difference (ATT) | 95% CI | Odds ratio |
+|---|---:|---:|---:|---:|---:|---|---:|
+| Q1 | 1,409 | 5.9 | 12.7% | 26.3% | **−13.6 pp** | [−16.3, −10.5] | 0.41 |
+| Q2 | 1,408 | 8.7 | 16.0% | 26.3% | **−10.3 pp** | [−13.4, −7.3] | 0.53 |
+| Q3 | 1,409 | 12.8 | 22.3% | 27.2% | **−4.9 pp** | [−8.0, −1.5] | 0.77 |
+| Q4 | 1,408 | 19.6 | 28.1% | 29.0% | **−0.9 pp** | [−4.1, +2.6] | 0.96 |
+| Q5 | 1,409 | 38.5 | 36.3% | 34.4% | **+1.8 pp** | [−1.4, +5.1] | 1.08 |
 
-- Woolf homogeneity test: `Q = 78.686`, `df = 4`, `p < 0.0001`.
+- Woolf homogeneity test: `Q = 79.786`, `df = 4`, `p < 0.0001`.
 
-The stratum-specific odds ratios were not compatible with a single common effect. Among small cells, Korean restaurants had markedly lower observed net decline than their matched peers. Around 20 stores the difference nearly disappeared; around 40 stores it reversed.
+The stratum-specific odds ratios were not compatible with a single common effect. Among small cells, Korean restaurants had markedly lower observed net decline than their matched peers. The three smallest strata are clearly negative (95% intervals exclude zero); from about 20 stores (Q4) the interval includes zero, and in the largest stratum (Q5) the point estimate is +1.8 pp with an interval from −1.4 to +5.1 pp.
 
 These are **stratified comparisons of the actual matched pairs**. They should not be mixed with the modeled dose-response or counterfactual exercise below, which changes covariate values in a fitted model.
 
@@ -201,13 +201,13 @@ I computed modeled differences while equalizing covariates one at a time.
 
 | Covariates equalized | Predicted Korean-versus-other gap |
 |---|---:|
-| None | **+3.07 pp** |
-| **Store count only** | **−5.74 pp** |
-| Foot traffic only | +3.57 pp |
+| None | **+3.06 pp** |
+| **Store count only** | **−5.84 pp** |
+| Foot traffic only | +3.53 pp |
 | Polygon area only | +3.20 pp |
-| Sales per store only | +6.09 pp |
-| Store count + foot traffic | −5.49 pp |
-| All four primary factors | **−5.79 pp** |
+| Sales per store only | +6.30 pp |
+| Store count + foot traffic | −5.48 pp |
+| All four primary factors | **−6.01 pp** |
 
 Equalizing **store count** accounted for most of the modeled reversal. Equalizing foot traffic alone did not. These are conditional model predictions, not causal forecasts of what would happen if a policy physically changed the number of businesses in an area.
 
@@ -295,23 +295,23 @@ A predictive model is only useful if it improves on a simple alternative and wor
 
 | Outcome/evaluation | Metric | Result | Benchmark |
 |---|---|---:|---|
-| Net decline, six rolling quarters | Mean AUC | **0.666 ± 0.010** | Main reported score |
-| Net decline, cell level, validation quarter | AUC | **0.668** | Random 0.5, sector-history baseline 0.554 |
-| Net decline, cell level | PR-AUC | **0.417** | Positive prevalence 0.260 |
+| Net decline, six rolling quarters | Mean AUC | **0.666 ± 0.011** | Main reported score |
+| Net decline, cell level, validation quarter | AUC | **0.669** | Random 0.5, sector-history baseline 0.554 |
+| Net decline, cell level | PR-AUC | **0.418** | Positive prevalence 0.260 |
 | Net decline, cell level | Brier score | **0.179** | Lower indicates better probability accuracy |
-| Closure counts, cell level | AUC used in operating evaluation | **0.717** | Store-count-only rule 0.705 |
-| Closure counts, cell level | Poisson deviance | **0.976** | Store-count-only 1.002 |
-| Closure counts, cell level | Top-decile lift | **1.52×** | Bottom decile 0.68× |
+| Closure counts, validation quarter | AUC for any closure (≥ 1) | **0.711** | Store-count-only rule 0.705 |
+| Closure counts, validation quarter | Poisson deviance | **0.992** | Store-count-only 1.002 |
+| Closure counts, validation quarter | Top-decile lift | **2.25×** | Bottom decile 0.44×; store-count rule 2.18× / 0.54× |
 
-**AUC = 0.668** means the model ranks a randomly chosen positive cell above a randomly chosen negative cell around 66.8% of the time. That is better than chance but is not accurate enough to treat every individual prediction as reliable. **PR-AUC = 0.417** exceeds the prevalence reference of 0.260 but should be considered in the context of class balance and the operational decision.
+**AUC = 0.669** means the model ranks a randomly chosen positive cell above a randomly chosen negative cell around 66.9% of the time. That is better than chance but is not accurate enough to treat every individual prediction as reliable. **PR-AUC = 0.418** exceeds the prevalence reference of 0.260 but should be considered in the context of class balance and the operational decision.
 
-The **Brier score** measures squared errors in predicted probabilities, not just the order of predictions. **Poisson deviance** is suitable for the closure-count modeling task; 0.976 was an improvement on 1.002, though not a large one.
+The **Brier score** measures squared errors in predicted probabilities, not just the order of predictions. **Poisson deviance** is suitable for the closure-count modeling task; 0.992 was an improvement on 1.002, though a small one. Lift is the share of cells with at least one closure among the top (bottom) 10% of cells by predicted closures, divided by the share across all cells; the store-count rule's values average 200 random orderings of tied cells.
 
 #### Why rolling validation is more important than a single quarter
 
-The model was selected using the validation quarter: features from 2025 Q4 and labels from 2026 Q1. Its validation AUC of **0.668** could therefore be somewhat optimistic.
+The model was selected using the validation quarter: features from 2025 Q4 and labels from 2026 Q1. Its validation AUC of **0.669** could therefore be somewhat optimistic.
 
-I used the mean across **six rolling validation quarters, 0.666 ± 0.010**, as the more representative estimate of repeatability. Rolling validation reduces sensitivity to any one quarter but is **not a substitute for a fully untouched final holdout**; one should still reserve a final period for an unbiased test in a future version.
+I used the mean across **six rolling validation quarters, 0.666 ± 0.011**, as the more representative estimate of repeatability. Rolling validation reduces sensitivity to any one quarter but is **not a substitute for a fully untouched final holdout**; one should still reserve a final period for an unbiased test in a future version.
 
 ### 4.H Compare against Seoul's published area-change indicator
 
@@ -344,31 +344,31 @@ The comparison rule was simple: **rank cells by number of stores**.
 
 | Selected K cells | Model precision | Store-count rule precision | Model lift | Overlap of selected lists |
 |---|---:|---:|---:|---:|
-| **50** | **0.760** | **0.380** | **2.93** | **6%** |
-| 100 | 0.620 | 0.460 | 2.39 | 16% |
-| 200 | 0.555 | 0.520 | 2.14 | 32% |
-| 500 | 0.498 | 0.468 | 1.92 | 56% |
-| 2,000 | 0.393 | 0.385 | 1.51 | 85% |
+| **50** | **0.780** | **0.380** | **3.00** | **4%** |
+| 100 | 0.640 | 0.460 | 2.46 | 17% |
+| 200 | 0.545 | 0.520 | 2.10 | 31% |
+| 500 | 0.490 | 0.467 | 1.89 | 56% |
+| 2,000 | 0.396 | 0.384 | 1.52 | 85% |
 
-Among the first **50 cells**, 76% of the model's selected cells had the evaluated outcome, compared with 38% under the store-count rule. Only **6%** of the two top-50 lists overlapped. The model was not simply replicating a ranking by number of shops.
+Among the first **50 cells**, 78% of the model's selected cells had the evaluated outcome, compared with 38% under the store-count rule. Only **4%** of the two top-50 lists overlapped. The model was not simply replicating a ranking by number of shops.
 
-As K increases, the lists become more similar and precision converges. This is why I evaluated the model at concrete operating points rather than treating one overall classification metric as the business result.
+As K increases, the lists become more similar and precision converges: at K = 200 the gap is already small (0.545 versus 0.520), and by K = 2,000 it is 0.396 versus 0.384. This is why I evaluated the model at concrete operating points rather than treating one overall classification metric as the business result.
 
 #### Does the model still help within similar-sized cells?
 
 A high store-count cell can have a high baseline rate of any opening/closure event. Ranking by store count alone can therefore look effective even without much additional information. I divided cells into store-count quintiles and compared the models within each stratum.
 
-| Store-count quintile | Mean stores | Observed positive prevalence | Model lift | Store-count rule lift |
+| Store-count quintile | Mean stores | Observed positive prevalence | Model lift | Store-count rule lift (mean, 95% range over random tie order) |
 |---|---:|---:|---:|---:|
-| Q1 | 5.3 | 15.0% | **1.345** | 1.100 |
-| Q2 | 7.3 | 18.4% | **1.343** | 1.101 |
-| Q3 | 11.0 | 21.9% | **1.464** | 1.160 |
-| Q4 | 18.8 | 30.8% | **1.266** | 1.142 |
-| Q5 | 64.5 | 43.7% | **1.175** | 1.075 |
+| Q1 | 5.3 | 15.0% | **1.548** | 1.02 (0.73–1.34) |
+| Q2 | 7.3 | 18.4% | **1.450** | 1.18 (0.99–1.37) |
+| Q3 | 11.0 | 21.9% | **1.483** | 1.19 (1.10–1.27) |
+| Q4 | 18.8 | 30.8% | **1.247** | 1.16 (1.13–1.18) |
+| Q5 | 64.5 | 43.7% | **1.166** | 1.08 (1.07–1.08) |
 
-The model had higher lift in all five size strata. In the smallest stratum, the comparison was **1.345 versus 1.100**. Overall closure-count AUC improved only **0.705 → 0.717 (+0.012)** over store count, but the advantage was more pronounced when selecting small lists and comparing areas of similar size.
+The model's lift was above the rule's 95% range in all five size strata; its average advantage was 0.53, 0.27 and 0.29 in the three smallest strata but only about 0.09 in the two largest. In the smallest stratum the comparison was **1.55 versus 1.02 (0.73–1.34)** for the store-count rule; in the largest it was 1.17 versus 1.08. This covers a single validation quarter and does not include sampling error in the model's lift. Overall closure-count AUC improved only **0.705 → 0.711 (+0.006)** over store count, but the advantage was more pronounced when selecting small lists and comparing areas of similar size.
 
-Care is needed not to mix evaluation setups. The **net-decline AUC (0.668)**, the **closure-count task's AUC (0.717)**, and **top-K precision (0.760)** summarize different targets or decisions and are not interchangeable measures.
+Care is needed not to mix evaluation setups. The **net-decline AUC (0.669)**, the **closure-count task's AUC (0.711)**, and **top-K precision (0.780)** summarize different targets or decisions and are not interchangeable measures.
 
 #### Why I excluded a seemingly impressive sector-ranking correlation
 
@@ -390,15 +390,15 @@ I scored cells using **2026 Q1 features** to estimate conditions in **2026 Q2**.
 
 | Sector | Predicted closures per 100 stores | 95% CI | Predicted net-decline probability | Net-decline rank |
 |---|---:|---|---:|---:|
-| Fast-food restaurants | **5.45%** | 5.26–5.65 | 0.19 | 8th |
-| Fried-chicken restaurants | **5.39%** | 5.20–5.62 | 0.19 | 7th |
-| Chinese restaurants | 5.07% | 4.87–5.27 | 0.20 | 6th |
-| Korean snack-food restaurants | 4.90% | 4.79–5.02 | 0.21 | 5th |
-| Coffee/beverages | 4.83% | 4.75–4.91 | 0.24 | 2nd |
-| Korean restaurants | **4.04%** | 3.99–4.09 | **0.25** | **1st** |
-| Beer and casual pubs | **3.99%** | 3.92–4.05 | 0.23 | 3rd |
+| Fast-food restaurants | **5.55%** | 5.41–5.67 | 0.20 | 8th |
+| Fried-chicken restaurants | **5.20%** | 5.10–5.29 | 0.20 | 7th |
+| Chinese restaurants | 4.91% | 4.79–5.02 | 0.21 | 6th |
+| Korean snack-food restaurants | 4.96% | 4.89–5.03 | 0.21 | 5th |
+| Coffee/beverages | 4.88% | 4.83–4.93 | 0.24 | 2nd |
+| Korean restaurants | **3.98%** | 3.94–4.01 | **0.25** | **1st** |
+| Beer and casual pubs | **4.02%** | 3.97–4.07 | 0.23 | 4th |
 
-Korean restaurants ranked **first** by predicted probability of net decline but only **ninth** by predicted closures relative to the number of stores. The two sector rankings had correlation **−0.406**. A sector can look risky on one metric and relatively less risky on another because the metrics answer different questions.
+Korean restaurants ranked **first** by predicted probability of net decline but only **tenth (last)** by predicted closures relative to the number of stores. The two sector rankings had correlation **−0.370**. A sector can look risky on one metric and relatively less risky on another because the metrics answer different questions.
 
 These closure rates and intervals are **model estimates**, not realized 2026 Q2 measurements. Narrow intervals do not capture every possible model misspecification or future distribution shift.
 
@@ -420,7 +420,7 @@ That conclusion is about the limits of the observed data and models. It is not p
 
 ### 5.3 Sector and scale interact
 
-The matched mean ATT of −5.77 pp masked a progression from **−13.0 pp in the smallest matched stratum** to **+2.4 pp in the largest**. Calling Korean restaurants categorically risky or categorically safe would overlook this heterogeneity.
+The matched mean ATT of −5.57 pp masked a progression from **−13.6 pp in the smallest matched stratum** to **+1.8 pp in the largest** (interval includes zero). Calling Korean restaurants categorically risky or categorically safe would overlook this heterogeneity.
 
 ### 5.4 Area-type sensitivity differs across sectors
 
@@ -440,7 +440,7 @@ A closure model's overall AUC exceeded the store-count baseline only slightly. B
 |---|---|
 | Users | District offices allocating small-business consultations or support |
 | Action | Rank candidate cells from `forecast_2026Q2_cell.csv` and select the top K consistent with capacity |
-| Evidence | Top-50 precision **0.760** versus **0.380** by store count; only 6% overlap |
+| Evidence | Top-50 precision **0.780** versus **0.380** by store count; only 4% overlap |
 | Timing | Re-run when the relevant quarter's data are released; the 2026 Q2 file is a historical forecast artifact |
 | Evaluation | Assess actual outcomes after support, ideally against comparable non-supported areas |
 
@@ -463,7 +463,7 @@ Cross-sectional coefficients should not be translated into a precise causal clos
 |---|---|
 | Users | Operators of public commercial-area dashboards |
 | Action | Display net-decline rate and closures relative to stores together, with definitions |
-| Evidence | Sector rank correlation **−0.406**; Korean restaurants first by net decline but ninth by closure rate |
+| Evidence | Sector rank correlation **−0.370**; Korean restaurants first by net decline but tenth (last) by closure rate |
 | Evaluation | Test whether users interpret relative sector risks more accurately |
 
 Seoul's area-change indicator also needs a clear statement of purpose: for this specific next-quarter net-decline screening task, HL had lift **0.937**.
@@ -483,7 +483,7 @@ This is a suggestion about **what to investigate**, not a demonstrated treatment
 |---|---|
 | Scope | 10 food-service sectors in neighborhood areas, with at least five stores per cell |
 | Matching coverage | Only **70.7%** of focal cells matched; large Korean-restaurant cells were underrepresented |
-| ATT heterogeneity | Woolf `p < 0.0001`; a single mean conceals a sign reversal across store-count strata |
+| ATT heterogeneity | Woolf `p < 0.0001`; a single mean conceals a gradient from clearly negative (small cells) to indistinguishable from zero (large cells) |
 | Sector sample sizes | `n = 302–1,306` in area-type analyses, with less stable estimates for smaller sectors |
 | Aggregate records | No individual shop's exact closing time, age, or operating conditions |
 | Causal interpretation | Matching controls observed variables, not unobserved rent, financing, or owner characteristics |
@@ -491,7 +491,7 @@ This is a suggestion about **what to investigate**, not a demonstrated treatment
 | Confidence intervals | Bootstrap intervals capture sampling variability, not all model errors |
 | No untouched test quarter | Model selection used the validation quarter; external or later testing remains needed |
 | Ranking reliability | Single-quarter district and district-by-sector ranks were unstable |
-| Incremental model performance | Closure-count AUC improved **0.705 → 0.717**; practical benefits were concentrated at specific operating points |
+| Incremental model performance | Closure-count AUC improved **0.705 → 0.711**; practical benefits were concentrated at specific operating points |
 
 ### Data that would improve the analysis
 
@@ -522,10 +522,10 @@ Place the necessary original CSV files in `data/raw/` and run the notebooks unde
 | `step3_label` | Create next-quarter label, store cutoff, features, and scoring data | `03_panel.pkl` 67,475 rows; `03_score.pkl` 5,428 rows |
 | `step4_eda_basic` | Sector/district/area-type distributions and assumption checks | Area-type effect sizes |
 | `step5_eda_h2` | Group selection, permutation test, Simpson-style stratification, common support | Raw +2.4 pp; permutation p 0.344 |
-| `step6_psm` | Propensity scores, trimming, 1:1 matching, balance, ATT, Woolf test | ATT −5.77 pp; Woolf p<0.0001 |
+| `step6_psm` | Propensity scores, trimming, 1:1 matching, balance, ATT, Woolf test | ATT −5.57 pp; Woolf p<0.0001 |
 | `step7_explain` | Supporting-question regressions and doubly robust estimate | Store-count AME +14.28 pp |
 | `step8_predict` | Baselines, boosting, rolling evaluation, calibration, top-K and size strata | Rolling AUC 0.666; HL lift 0.937 |
-| `step9_conclusion` | Counterfactual comparisons and two-stage label mechanics | Store count alone −5.74 pp |
+| `step9_conclusion` | Counterfactual comparisons and two-stage label mechanics | Store count alone −5.84 pp |
 | `step10_extended` | Separate negative-binomial models, cell fixed effects, traffic composition | Additional foot-traffic checks |
 | `step11_forecast` | Score 2026 Q2 and summarize model uncertainty | `11_forecast_2026Q2.pkl` |
 
