@@ -518,7 +518,7 @@ K를 크게 늘리면 두 규칙의 결과가 가까워진다. K = 200에서는 
 ### 8-1. 환경과 실행 순서
 
 ```bash
-pip install pandas numpy matplotlib scipy scikit-learn statsmodels pyarrow ipykernel
+pip install -r requirements.txt
 ```
 
 원본 데이터가 필요한 경우 `data/raw/`에 CSV를 넣고 `src/`의 노트북을 순서대로 실행한다. 노트북의 첫 셀은 `config.py`를 기준으로 루트 경로를 찾도록 작성되어 있다. `config.py`를 수정한 뒤에는 이전 모듈 캐시 때문에 오류가 날 수 있으므로 **Jupyter 커널을 재시작**하는 편이 안전하다.
