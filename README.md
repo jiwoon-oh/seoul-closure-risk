@@ -519,6 +519,7 @@ This is a suggestion about **what to investigate**, not a demonstrated treatment
 
 ```bash
 pip install -r requirements.txt
+pip install jupyter
 ```
 
 Place the necessary original CSV files in `data/raw/` and run the notebooks under `src/` in numerical order. Their first cells locate the project root using `config.py`. If `config.py` is changed, restart the Jupyter kernel to avoid importing a cached older version.
