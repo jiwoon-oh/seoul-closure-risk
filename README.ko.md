@@ -1,6 +1,6 @@
 # 서울 골목상권 외식업 순감소 분석 — H2와 보조질문 2
 
-[English](README.md) · [원본 프로젝트 폴더](https://github.com/jiwoon-oh/ai-data-bootcamp/tree/main/project/h2_nb)
+[English](README.md)
 
 > 이 README는 팀 프로젝트 중 **H2(업종 간 순감소 격차와 규모 교란)**, **보조질문 2(다음 분기 순감소 관련 변수)**, 그리고 연결된 예측·운영 분석을 정리한 문서다. 자치구별 순감소 전환 업종을 찾는 핵심 질문과 H1은 다른 팀원 담당 범위이므로 포함하지 않았다.
 
@@ -539,6 +539,7 @@ pip install jupyter
 | `step9_conclusion` | 반사실 시뮬레이션, 라벨 산술·2단계 분해 | 규모 단독 −5.84%p |
 | `step10_extended` | 개업·폐업 음이항, 칸 고정효과, 유동인구 구성 분석 | 유동인구 관련성 재점검 |
 | `step11_forecast` | 2026Q2 위험도·폐업률 예측과 불확실성 | `11_forecast_2026Q2.pkl` |
+| `step12_figures` | `outputs/`의 CSV로 README 그림 5개 작성 | `images/` (PNG 5개) |
 
 ### 8-3. 산출물 구조
 

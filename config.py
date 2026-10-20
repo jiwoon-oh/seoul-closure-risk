@@ -360,6 +360,69 @@ def set_plot_style():
     plt.rcParams["figure.dpi"] = 110
 
 
+def _overlap_area(a, b):
+    w = min(a.x1, b.x1) - max(a.x0, b.x0)
+    h = min(a.y1, b.y1) - max(a.y0, b.y0)
+    return w * h if w > 0 and h > 0 else 0.0
+
+
+def label_points(ax, xs, ys, names, fontsize=7.5, markersize_pt=9, fixed=None, dpi=None):
+    """Put each name next to its point without overlapping other labels or points.
+    Greedy and deterministic: points are visited in (x, y, name) order and take the first free offset.
+    `dpi` is the dpi the figure will be saved at: text is measured at that dpi because hinted text widths do not scale linearly.
+    `fixed` maps a name to a (dx, dy, ha, va) offset in points that is used as is (for crowded clusters)."""
+    import numpy as np
+    from matplotlib.transforms import Bbox
+    fig = ax.figure
+    old_dpi = fig.dpi
+    if dpi:
+        fig.set_dpi(dpi)
+    fig.canvas.draw()
+    rend = fig.canvas.get_renderer()
+    pts = ax.transData.transform(np.column_stack([np.asarray(xs, float), np.asarray(ys, float)]))
+    dpi_k = fig.dpi / 72.0
+    r = markersize_pt * dpi_k / 2
+    # the zero lines of the axes count as obstacles too
+    zero_x = [ax.transData.transform((0, ax.get_ylim()[0]))[0]] if ax.get_xlim()[0] < 0 < ax.get_xlim()[1] else []
+    zero_y = [ax.transData.transform((ax.get_xlim()[0], 0))[1]] if ax.get_ylim()[0] < 0 < ax.get_ylim()[1] else []
+    taken = [Bbox([[x - r, y - r], [x + r, y + r]]) for x, y in pts]
+    axbox = ax.get_window_extent(rend)
+    cands = [(6, 4, "left", "bottom"), (6, -4, "left", "top"), (-6, 4, "right", "bottom"), (-6, -4, "right", "top"),
+             (0, 9, "center", "bottom"), (0, -9, "center", "top"), (10, 0, "left", "center"), (-10, 0, "right", "center"),
+             (14, 14, "left", "bottom"), (-14, 14, "right", "bottom"), (14, -14, "left", "top"), (-14, -14, "right", "top"),
+             (22, 0, "left", "center"), (-22, 0, "right", "center"), (0, 22, "center", "bottom"), (0, -22, "center", "top"),
+             (30, 24, "left", "bottom"), (-30, 24, "right", "bottom"), (30, -24, "left", "top"), (-30, -24, "right", "top"),
+             (40, 0, "left", "center"), (-40, 0, "right", "center"), (0, 36, "center", "bottom"), (0, -36, "center", "top"),
+             (46, 34, "left", "bottom"), (-46, 34, "right", "bottom"), (46, -34, "left", "top"), (-46, -34, "right", "top"),
+             (60, 14, "left", "bottom"), (-60, 14, "right", "bottom"), (60, -14, "left", "top"), (-60, -14, "right", "top"),
+             (70, 50, "left", "bottom"), (-70, 50, "right", "bottom"), (70, -50, "left", "top"), (-70, -50, "right", "top"),
+             (0, 60, "center", "bottom"), (0, -60, "center", "top"), (80, 0, "left", "center"), (-80, 0, "right", "center")]
+    order = sorted(range(len(names)), key=lambda i: (pts[i][0], pts[i][1], str(names[i])))
+    fixed = fixed or {}
+    for i in sorted(order, key=lambda k: str(names[k]) not in fixed):
+        best, best_ov = None, None
+        for dx, dy, ha, va in ([fixed[str(names[i])]] if str(names[i]) in fixed else cands):
+            far = max(abs(dx), abs(dy)) >= 14
+            a = ax.annotate(str(names[i]), (xs[i], ys[i]), xytext=(dx, dy), textcoords="offset points",
+                            fontsize=fontsize, ha=ha, va=va,
+                            arrowprops=dict(arrowstyle="-", color="#999999", lw=0.6, shrinkA=0, shrinkB=3) if far else None)
+            bb = a.get_window_extent(rend).expanded(1.08, 1.3)
+            inside = axbox.x0 <= bb.x0 and bb.x1 <= axbox.x1 and axbox.y0 <= bb.y0 and bb.y1 <= axbox.y1
+            ov = sum(_overlap_area(bb, o) for k, o in enumerate(taken) if k != i)
+            ov += 0 if inside else 1e6
+            ov += sum(400 * (bb.y1 - bb.y0) for v in zero_x if bb.x0 < v < bb.x1) + sum(400 * (bb.x1 - bb.x0) for v in zero_y if bb.y0 < v < bb.y1)
+            if best_ov is None or ov < best_ov:
+                if best is not None:
+                    best[0].remove()
+                best, best_ov = (a, bb), ov
+            else:
+                a.remove()
+            if best_ov == 0:
+                break
+        taken.append(best[1])
+    fig.set_dpi(old_dpi)
+
+
 # -- Reproducibility tools ----------------------------
 # So that ties never depend on row order, ties are broken by the key order below.
 TIE_KEYS = ["area_code", "service_code", "quarter_idx"]

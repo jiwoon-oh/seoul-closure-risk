@@ -569,7 +569,7 @@ pip install -r requirements.txt
 pip install jupyter
 ```
 
-Place the necessary original CSV files in `data/raw/` and run the notebooks under `src/` in numerical order. Their first cells locate the project root using `config.py`. If `config.py` is changed, restart the Jupyter kernel to avoid importing a cached older version.
+Download the original CSV files into `data/raw/` (see `data/README.md`) and run the notebooks under `src/` in numerical order. Their first cells locate the project root using `config.py`. If `config.py` is changed, restart the Jupyter kernel to avoid importing a cached older version.
 
 ### 8.2 Analysis pipeline
 
@@ -586,6 +586,7 @@ Place the necessary original CSV files in `data/raw/` and run the notebooks unde
 | `step9_conclusion` | Counterfactual comparisons and two-stage label mechanics | Store count alone −5.84 pp |
 | `step10_extended` | Separate negative-binomial models, cell fixed effects, traffic composition | Additional foot-traffic checks |
 | `step11_forecast` | Score 2026 Q2 and summarize model uncertainty | `11_forecast_2026Q2.pkl` |
+| `step12_figures` | Draw the five README figures from the CSV files in `outputs/` | `images/` (5 PNG files) |
 
 ### 8.3 Output files
 
