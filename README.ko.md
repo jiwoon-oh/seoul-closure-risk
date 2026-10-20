@@ -552,7 +552,7 @@ pip install jupyter
 | `step9_conclusion` | 반사실 시뮬레이션, 라벨 산술·2단계 분해 | 규모 단독 −5.84%p |
 | `step10_extended` | 개업·폐업 음이항, 칸 고정효과, 유동인구 구성 분석 | 유동인구 관련성 재점검 |
 | `step11_forecast` | 2026Q2 위험도·폐업률 예측과 불확실성 | `11_forecast_2026Q2.pkl` |
-| `step12_figures` | `outputs/`의 CSV로 README 그림 5개 작성 | `images/` (PNG 5개) |
+| `step12_figures` | `outputs/`의 CSV로 그림 작성 | `images/` (PNG 7개, 2개는 포트폴리오 사이트 전용) |
 
 ### 8-3. 산출물 구조
 
