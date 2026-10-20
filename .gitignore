@@ -6,3 +6,6 @@ __pycache__/
 .ipynb_checkpoints/
 .claude/
 .env
+
+# transparent figure variants for the portfolio site (generated with TRANSPARENT = True)
+images/transparent/
