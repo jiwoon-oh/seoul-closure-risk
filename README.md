@@ -4,6 +4,8 @@
 
 > This README covers my work on **H2 (restaurant-sector differences and store-count confounding)**, **Supporting Question 2 (predictors of next-quarter net decline)**, and the connected forecasting and operational evaluation. The project's main question about district-level transition sectors and H1 were handled by other teammates and are outside this document.
 
+**Data and method:** Seoul Open Data, 10 food-service categories, 67,475 area × category × quarter cells (all four commercial-area types, 2023 Q1–2025 Q4, 12 quarters with next-quarter labels). I compare Korean restaurants with the other nine categories using propensity-score matching on store count, foot traffic, area size and attraction facilities (34,647 cells in neighborhood commercial areas). Separately, I test whether a prediction model fitted on all four commercial-area types ranks closure risk better than store count alone.
+
 ## 1. Results at a glance
 
 Korean restaurants initially appeared to have a higher next-quarter net-decline rate than other food-service categories in Seoul's neighborhood commercial areas. However, the comparison reversed after matching areas on store count and other observable conditions. Looking more closely, even that negative average differed sharply with store count.
@@ -109,7 +111,16 @@ Old 2023–2024 store files name two fields differently (`legacy_*` above); sect
 | At least five stores | **67,495** |
 | Final analytical panel | **67,475** |
 
-The positive-class share for next-quarter net decline in the final sample was **25.5%**. Propensity-score matching for H2 used the **neighborhood commercial-area** subset of that panel.
+The positive-class share for next-quarter net decline in the final sample was **25.5%**. The panel covers all four commercial-area types. The H2 comparison (raw gap, permutation test, propensity-score matching and size strata) used only its **neighborhood commercial-area** subset, **34,647** of the 67,475 cells. The table shows which sample each part of the analysis uses.
+
+| Part of the analysis | Sample | Cells |
+|---|---|---:|
+| Distribution checks (4.0) | all area types, one row per area × category with at least six observed quarters | 5,687 |
+| Raw gap, permutation test, matching, size strata, doubly robust estimate, alternative outcome (4.A–4.B) | neighborhood commercial areas, all 12 quarters (the matched pairs are drawn from these cells) | 34,647 |
+| Counterfactual simulation, supporting regressions, label mechanics (4.C–4.E) | neighborhood commercial areas, feature quarters 2023 Q1–2025 Q3 | 31,875 |
+| Prediction models on the validation quarter, top-K, size strata, change-indicator benchmark (4.G–4.I) | all area types, feature quarter 2025 Q4 (trained on 61,996 earlier cells) | 5,479 |
+| Rolling validation (4.G) | all area types, six validation quarters, out-of-fold | 33,223 |
+| 2026 Q2 forecast (4.J) | model fitted on neighborhood commercial areas | 31,875 fitted, 2,737 scored |
 
 ### 3.2 Why I excluded cells with fewer than five stores
 
@@ -264,7 +275,7 @@ Equalizing **store count** accounted for most of the modeled reversal. Equalizin
 
 ### 4.D Supporting Question 2: what predicts next-quarter net decline?
 
-I used regression with cluster-robust standard errors to account for related cells within commercial areas (`n = 67,475`). The table reports **average marginal effects (AME)**, which translate fitted relationships into probability-point changes.
+I used regression with cluster-robust standard errors to account for related cells within commercial areas (`n = 31,875`, neighborhood commercial areas, feature quarters 2023 Q1–2025 Q3). The table reports **average marginal effects (AME)**, which translate fitted relationships into probability-point changes.
 
 | Predictor | AME | p-value | Reading |
 |---|---:|---:|---|
@@ -303,14 +314,14 @@ A large cell is more likely to experience **some opening or closure event**, eve
 | 16–25 | 4,262 | 73.9% | 31.9% | 43.2% |
 | 51+ | 825 | 97.9% | 37.7% | 38.5% |
 
-Cells with no opening or closure count as non-decline. There were many of them: **43.7%** of the sample had no event. This mechanically suppresses the binary net-decline rate among small cells.
+Cells with no opening or closure count as non-decline. There were many of them: **48.5%** of these 31,875 cells (**15,451**) had no event (**43.7%** in the full 67,475-cell panel). This mechanically suppresses the binary net-decline rate among small cells.
 
 ```text
 P(net decline) = P(any opening/closure event)
                  × P(net decline | an event occurred)
 ```
 
-Because net decline cannot occur without an event, this is an exact decomposition. In the **15,451 no-event cells** checked, none had a net-decline label of 1.
+Because net decline cannot occur without an event, this is an exact decomposition. In the 15,451 no-event cells checked, none had a net-decline label of 1.
 
 | Model stage | Adjusted coefficient on log(store_count), clustered SE | Observations |
 |---|---:|---:|
