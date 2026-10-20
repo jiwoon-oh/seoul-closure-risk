@@ -440,7 +440,7 @@ Care is needed not to mix evaluation setups. The **net-decline AUC (0.669)**, th
 
 #### Why I excluded a seemingly impressive sector-ranking correlation
 
-An early analysis suggested a very high sector-ranking correlation of **0.915**. I did not use it as performance evidence. Separately, single-quarter rankings of the net-decline label turned out to be noisy: split-half reliability was **0.212** for service category, **0.086** for district and **0.035** for district × service category. For six pooled quarters (out-of-fold; district × service category cells with at least 60 rows, 97 cells) the figures were **0.617**, **0.537** and **0.259**, so the last number is for a different set of cells. Single-quarter district-by-sector ranking tables should not be treated as stable outcomes.
+The closure-count model's rank correlation across the 10 categories in the validation quarter was **0.915** (neighborhood cells). I did not report it as performance evidence, because it rests on ten categories in a single quarter. Separately, single-quarter rankings of the net-decline label turned out to be noisy: split-half reliability was **0.212** for service category, **0.086** for district and **0.035** for district × service category. For six pooled quarters (out-of-fold; district × service category cells with at least 60 rows, 97 cells) the figures were **0.617**, **0.537** and **0.259**, so the last number is for a different set of cells. Single-quarter district-by-sector ranking tables should not be treated as stable outcomes.
 
 ### 4.J Predictions for 2026 Q2: 2,737 neighborhood cells
 
