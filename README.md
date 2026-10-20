@@ -440,17 +440,7 @@ Care is needed not to mix evaluation setups. The **net-decline AUC (0.669)**, th
 
 #### Why I excluded a seemingly impressive sector-ranking correlation
 
-An early analysis suggested a very high sector-ranking correlation of **0.915**. But the store-count-only baseline produced the same value. I then tested whether the *target ranking itself* was stable enough to evaluate.
-
-- Split-half rank correlation: **+0.110**
-- Spearman–Brown-adjusted reliability: **0.198**
-- 5th–95th percentile range of split-half correlations: **−0.36 to +0.54**
-- Square root of reliability, as a reference ceiling under simplifying assumptions: **√0.198 ≈ 0.444**
-- Model's sector-ranking correlation: **0.515**
-
-The sector ranking changed substantially between sample halves. I did **not use 0.515 as reliable forecasting evidence**, particularly given its discrepancy with the reference reliability calculation. The square-root relationship is a conditional approximation, not a universal theoretical ceiling under all conditions.
-
-Within a single quarter, split-half reliability was also low at more aggregated reporting levels: **0.086 for district**, **0.035 for district × sector**. Pooling six quarters raised those figures to **0.537** and **0.259**, respectively. Single-quarter district-by-sector ranking tables should not be treated as stable outcomes.
+An early analysis suggested a very high sector-ranking correlation of **0.915**. I did not use it as performance evidence, because a single quarter's ranking target is itself noisy: split-half reliability was **0.212** for service category, **0.086** for district and **0.035** for district × service category. Pooling six quarters raised those figures to **0.617**, **0.537** and **0.259**, respectively. Single-quarter district-by-sector ranking tables should not be treated as stable outcomes.
 
 ### 4.J Predictions for 2026 Q2: 2,737 neighborhood cells
 
