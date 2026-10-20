@@ -440,7 +440,7 @@ Care is needed not to mix evaluation setups. The **net-decline AUC (0.669)**, th
 
 #### Why I excluded a seemingly impressive sector-ranking correlation
 
-An early analysis suggested a very high sector-ranking correlation of **0.915**. I did not use it as performance evidence, because a single quarter's ranking target is itself noisy: split-half reliability was **0.212** for service category, **0.086** for district and **0.035** for district × service category. Pooling six quarters raised those figures to **0.617**, **0.537** and **0.259**, respectively. Single-quarter district-by-sector ranking tables should not be treated as stable outcomes.
+An early analysis suggested a very high sector-ranking correlation of **0.915**. I did not use it as performance evidence. Separately, single-quarter rankings of the net-decline label turned out to be noisy: split-half reliability was **0.212** for service category, **0.086** for district and **0.035** for district × service category. For six pooled quarters (out-of-fold; district × service category cells with at least 60 rows, 97 cells) the figures were **0.617**, **0.537** and **0.259**, so the last number is for a different set of cells. Single-quarter district-by-sector ranking tables should not be treated as stable outcomes.
 
 ### 4.J Predictions for 2026 Q2: 2,737 neighborhood cells
 

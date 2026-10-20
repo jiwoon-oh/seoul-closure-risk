@@ -41,3 +41,5 @@ Source file names (the 11 files `config.py` reads, exactly as saved in the copy 
 The district-level tables on the same portal (names ending in "by district") have similar names but are not used. They are told apart by the table name, so leaving them in `data/raw/` does no harm.
 
 Commercial-area names are not carried into any output. To get them, join `area_code` to the boundary table.
+
+Copyright holder (as shown on the dataset pages): Seoul Metropolitan Government. Provider: Seoul Credit Guarantee Foundation.
