@@ -2,6 +2,8 @@
 
 [한국어](README.ko.md)
 
+Full case study: https://jiwoon-oh.github.io/portfolio/projects/seoul-closure-risk/
+
 > This README covers my work on **H2 (restaurant-sector differences and store-count confounding)**, **Supporting Question 2 (predictors of next-quarter net decline)**, and the connected forecasting and operational evaluation. The project's main question about district-level transition sectors and H1 were handled by other teammates and are outside this document.
 
 **Data and method:** Seoul Open Data, 10 food-service categories, 67,475 area × category × quarter cells (all four commercial-area types, 2023 Q1–2025 Q4, 12 quarters with next-quarter labels). I compare Korean restaurants with the other nine categories using propensity-score matching on store count, foot traffic, area size and attraction facilities (34,647 cells in neighborhood commercial areas). Separately, I test whether a prediction model fitted on all four commercial-area types ranks closure risk better than store count alone.
