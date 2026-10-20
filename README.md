@@ -10,7 +10,7 @@ Korean restaurants initially appeared to have a higher next-quarter net-decline 
 
 | Question | Result | How to read it |
 |---|---|---|
-| Unadjusted net-decline rate | Korean restaurants **25.3%** versus others **22.9%** | Initial gap: +2.4 percentage points |
+| Unadjusted net-decline rate | Korean restaurants **25.3%** versus others **22.9%** | Initial gap: +2.4 percentage points (pp) |
 | Selecting the highest-ranked sector | Permutation **p = 0.344** | The apparent leader was not robust to selection uncertainty |
 | Matched average difference | **−5.57 pp**, 95% CI **[−7.08, −4.17]** | Applies to comparable, successfully matched cells |
 | Other estimators | Doubly robust **−6.00**, counterfactual **−6.01**, alternative label **−8.71 pp** | The estimated mean direction remained negative |
@@ -54,6 +54,53 @@ I combined Seoul Open Data commercial-area tables for **stores, estimated sales,
 
 I use the word **cell** for one `commercial area × food-service category × quarter` combination. A cell is an aggregate; it is not an individual business.
 
+Commercial-area names are not included in any output: join `area_code` to the source table to get them.
+
+<details>
+<summary>English name ↔ source field (the source tables are Korean; the Korean field names appear only here)</summary>
+
+| English name | Source field |
+|---|---|
+| `quarter_code` | `기준_년분기_코드` |
+| `area_type_code` | `상권_구분_코드` |
+| `area_type_name` | `상권_구분_코드_명` |
+| `area_code` | `상권_코드` |
+| `district_code` | `자치구_코드` |
+| `district_name` | `자치구_코드_명` |
+| `admin_dong_code` | `행정동_코드` |
+| `x_coord` | `엑스좌표_값` |
+| `y_coord` | `와이좌표_값` |
+| `area_size` | `영역_면적` |
+| `service_code` | `서비스_업종_코드` |
+| `service_name` | `서비스_업종_코드_명` |
+| `store_count` | `전체_점포_수` |
+| `nonfranchise_store_count` | `일반_점포_수` |
+| `franchise_store_count` | `프랜차이즈_점포_수` |
+| `legacy_nonfranchise_store_count` | `점포_수` |
+| `legacy_total_store_count` | `유사_업종_점포_수` |
+| `opening_count` | `개업_점포_수` |
+| `closure_count` | `폐업_점포_수` |
+| `attracting_facility_count` | `집객시설_수` |
+| `subway_station_count` | `지하철_역_수` |
+| `monthly_sales` | `당월_매출_금액` |
+| `monthly_sales_count` | `당월_매출_건수` |
+| `foot_traffic_total` | `총_유동인구_수` |
+| `foot_traffic_age_20` | `연령대_20_유동인구_수` |
+| `foot_traffic_age_30` | `연령대_30_유동인구_수` |
+| `foot_traffic_age_60_plus` | `연령대_60_이상_유동인구_수` |
+| `foot_traffic_time_11_14` | `시간대_11_14_유동인구_수` |
+| `foot_traffic_time_17_21` | `시간대_17_21_유동인구_수` |
+| `foot_traffic_time_21_24` | `시간대_21_24_유동인구_수` |
+| `foot_traffic_sat` | `토요일_유동인구_수` |
+| `foot_traffic_sun` | `일요일_유동인구_수` |
+| `area_change_indicator` | `상권_변화_지표` |
+| `avg_operating_months` | `운영_영업_개월_평균` |
+| `seoul_avg_operating_months` | `서울_운영_영업_개월_평균` |
+
+Old 2023–2024 store files name two fields differently (`legacy_*` above); section 3.3 explains why they cannot be renamed one to one.
+
+</details>
+
 | Preparation step | Rows |
 |---|---:|
 | Original store dataset, all categories | **995,377** |
@@ -72,13 +119,13 @@ The cutoff was therefore a compromise between data usability and coverage. It re
 
 ### 3.3 A store-count schema change across years
 
-This was the most consequential data preparation fix. In the 2023 and 2024 files, `점포_수` represented **non-franchise stores**, not total stores. The later schema renamed that concept `일반_점포_수` and provided the full count under a separate field.
+This was the most consequential data preparation fix. In the 2023 and 2024 files, `legacy_nonfranchise_store_count` represented **non-franchise stores**, not total stores. The later schema renamed that concept `nonfranchise_store_count` and provided the full count under a separate field.
 
 I checked the field mapping with an accounting identity:
 
 ```text
-Old-file total stores = 점포_수 + 프랜차이즈_점포_수
-                      = 유사_업종_점포_수
+Old-file total stores = legacy_nonfranchise_store_count + franchise_store_count
+                      = legacy_total_store_count
 Consistency check: 1.0000
 ```
 
@@ -287,7 +334,7 @@ I compared the distributions of each sector's net-decline frequency across comme
 | Bakeries | 347 | 12.9 | 0.0015 | 0.0318 |
 | Chinese restaurants | 302 | 11.0 | 0.0041 | 0.0300 |
 | Fast-food restaurants | 322 | 7.1 | 0.0281 | 0.0161 |
-| Fried-chicken restaurants | 341 | 2.1 | 0.3552 | **0.0002** |
+| Fried-chicken shops | 341 | 2.1 | 0.3552 | **0.0002** |
 
 **Eight of ten** sector-level tests remained significant at the Bonferroni threshold. The observed area-type differences were relatively pronounced for pubs (ε² = 0.1202) and very small for fried-chicken shops (ε² = 0.0002).
 
@@ -332,7 +379,7 @@ For **this particular prediction target and evaluation sample**, HL had lift bel
 
 I used the published classification **only as a benchmark**. It incorporates information related to closures, so including it directly as a feature could leak target-related information.
 
-A separate variable in the same source, `운영_영업_개월_평균` (average operating months of active businesses), was worth a preliminary check:
+A separate variable in the same source, `avg_operating_months` (average operating months of active businesses), was worth a preliminary check:
 
 - Univariate AUC: **0.538**
 - Correlation with `log(store_count)`: **−0.085**
@@ -399,7 +446,7 @@ I scored cells using **2026 Q1 features** to estimate conditions in **2026 Q2**.
 | Sector | Predicted closures per 100 stores | 95% CI | Predicted net-decline probability | Net-decline rank |
 |---|---:|---|---:|---:|
 | Fast-food restaurants | **5.55%** | 5.41–5.67 | 0.20 | 8th |
-| Fried-chicken restaurants | **5.20%** | 5.10–5.29 | 0.20 | 7th |
+| Fried-chicken shops | **5.20%** | 5.10–5.29 | 0.20 | 7th |
 | Chinese restaurants | 4.91% | 4.79–5.02 | 0.21 | 6th |
 | Korean snack-food restaurants | 4.96% | 4.89–5.03 | 0.21 | 5th |
 | Coffee/beverages | 4.88% | 4.83–4.93 | 0.24 | 2nd |
@@ -497,7 +544,7 @@ This is a suggestion about **what to investigate**, not a demonstrated treatment
 | Sector sample sizes | `n = 302–1,306` in area-type analyses, with less stable estimates for smaller sectors |
 | Aggregate records | No individual shop's exact closing time, age, or operating conditions |
 | Causal interpretation | Matching controls observed variables, not unobserved rent, financing, or owner characteristics |
-| Meaning of `영역_면적` | The exact source-field definition could not be fully established |
+| Meaning of `area_size` | The exact source-field definition could not be fully established |
 | Confidence intervals | Bootstrap intervals capture sampling variability, not all model errors |
 | No untouched test quarter | Model selection used the validation quarter; external or later testing remains needed |
 | Ranking reliability | Single-quarter district and district-by-sector ranks were unstable |
@@ -507,7 +554,7 @@ This is a suggestion about **what to investigate**, not a demonstrated treatment
 
 1. **Individual business opening and closure histories.** With business age and closure dates, a survival model such as Cox regression could be considered. Current data only show aggregate event counts.
 2. **Commercial-area-level rental costs.** Store count may proxy operating costs or location demand. District-wide rental averages are too coarse to distinguish neighboring areas.
-3. **Average months of operation (`운영_영업_개월_평균`).** It had a weak but nonredundant univariate signal (AUC 0.538, store-count correlation −0.085), so it is worth testing in a later model.
+3. **Average months of operation (`avg_operating_months`).** It had a weak but nonredundant univariate signal (AUC 0.538, store-count correlation −0.085), so it is worth testing in a later model.
 4. **Delivery-platform dependency and business-format variables.** These could explain differences not captured by coarse area-type categories.
 5. **Policy start dates and recipients.** A difference-in-differences or event-study design may help estimate the *effect of support* rather than merely predict where risk is high.
 
@@ -560,25 +607,25 @@ outputs/figures/
   Figures from steps 4 through 11
 ```
 
-Useful presentation files include `forecast_2026Q2_cell.csv` for candidate cells, `forecast_2026Q2_service.csv` for category-level summaries, and `h2_counterfactual.csv` for the variable-by-variable comparisons. Existing chart images retain their original Korean labels.
+Useful presentation files include `forecast_2026Q2_cell.csv` for candidate cells, `forecast_2026Q2_service.csv` for category-level summaries, and `h2_counterfactual.csv` for the variable-by-variable comparisons. All chart images use English labels.
 
 ### 8.4 Main source columns
 
 | Source | Field | Use |
 |---|---|---|
-| Stores/areas | `개업_점포_수`, `폐업_점포_수` | Next-quarter net-decline outcome |
-| Stores/areas | `전체_점포_수` (older `유사_업종_점포_수`) | Store-count predictor |
-| Stores/areas | `프랜차이즈_점포_수` | Schema validation and franchise share |
-| Stores/areas | `서비스_업종_코드` | Stable identification of categories |
-| Pedestrian traffic | `총_유동인구_수` | Primary H2 covariate |
+| Stores/areas | `opening_count`, `closure_count` | Next-quarter net-decline outcome |
+| Stores/areas | `store_count` (older `legacy_total_store_count`) | Store-count predictor |
+| Stores/areas | `franchise_store_count` | Schema validation and franchise share |
+| Stores/areas | `service_code` | Stable identification of categories |
+| Pedestrian traffic | `foot_traffic_total` | Primary H2 covariate |
 | Pedestrian traffic | Time, age, weekday breakdowns | Auxiliary composition analysis |
-| Area geometry | `상권_구분_코드_명`, `자치구_코드_명` | Neighborhood filter and stratification |
-| Area geometry | `영역_면적` | Matching covariate; definition caveat |
-| Attracting facilities | `집객시설_수` | Area amenity covariate |
-| Attracting facilities | `지하철_역_수` | Excluded due to 85% missingness |
-| Estimated sales | `당월_매출_금액` | Supporting regression; excluded from primary matching |
-| Change-indicator table | `상권_변화_지표` | External benchmark only |
-| Change-indicator table | `운영_영업_개월_평균` | Future-feature candidate; univariate testing only |
+| Area geometry | `area_type_name`, `district_name` | Neighborhood filter and stratification |
+| Area geometry | `area_size` | Matching covariate; definition caveat |
+| Attracting facilities | `attracting_facility_count` | Area amenity covariate |
+| Attracting facilities | `subway_station_count` | Excluded due to 85% missingness |
+| Estimated sales | `monthly_sales` | Supporting regression; excluded from primary matching |
+| Change-indicator table | `area_change_indicator` | External benchmark only |
+| Change-indicator table | `avg_operating_months` | Future-feature candidate; univariate testing only |
 
 ### 8.5 Short glossary
 

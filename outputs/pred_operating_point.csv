@@ -1,4 +1,4 @@
-﻿찍은 칸수,모델 정밀도,점포수 정밀도,점포수 정밀도 2.5%,점포수 정밀도 97.5%,점포수 정밀도(결정적),모델 Lift,점포수 Lift,점포수 Lift 2.5%,점포수 Lift 97.5%,점포수 Lift(결정적),두 목록 겹침
+﻿n_cells_selected,model_precision,store_count_precision,store_count_precision_ci_low,store_count_precision_ci_high,store_count_precision_deterministic,model_lift,store_count_lift,store_count_lift_ci_low,store_count_lift_ci_high,store_count_lift_deterministic,list_overlap
 50,0.78,0.38,0.38,0.38,0.38,3.0032466619817284,1.463120168657765,1.463120168657765,1.463120168657765,1.463120168657765,0.04
 100,0.64,0.46,0.46,0.46,0.46,2.4642023893183413,1.771145467322558,1.771145467322558,1.771145467322558,1.771145467322558,0.17
 200,0.545,0.5199999999999999,0.52,0.52,0.52,2.0984223471539,2.002164441321152,2.0021644413211526,2.0021644413211526,2.0021644413211526,0.305

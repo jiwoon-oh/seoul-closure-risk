@@ -8,33 +8,40 @@ FIG = ROOT / "outputs" / "figures"
 for p in (RAW, PROC, FIG):
     p.mkdir(parents=True, exist_ok=True)
 
-ENCODING = "cp949"
-
-# 재현성: 모든 난수(부트스트랩·순열·매칭 셔플·모델)는 이 시드 하나에서 나온다.
+# Reproducibility: every random draw (bootstrap, permutation, matching shuffle, models) comes from this one seed.
 SEED = 42
 
-# ── 파일 탐색 ──────────────────────────────────
-# 실제 파일명 패턴: "서울시 상권분석서비스(점포-상권)_2023년.csv"
-# 공백/밑줄 표기가 파일마다 섞여 있어 정규화 후 비교한다.
+# =====================================================================================
+# SOURCE NAME TABLES (Korean is allowed ONLY in this block)
+# The source files, their columns and their category values are Korean. Everything the
+# notebooks see is English: `standardize_source` renames and translates right after loading,
+# and anything not listed here raises an error instead of passing through silently.
+# BEGIN SOURCE NAMES
+# =====================================================================================
+ENCODING = "cp949"
+
+# File name patterns look like "서울시 상권분석서비스(점포-상권)_2023년.csv"; spaces and underscores differ
+# between files, so names are normalized before comparing.
 def _normalize(name: str) -> str:
-    # 괄호·하이픈까지 지운다. 내려받는 경로에 따라 "(점포-상권)" 이 "점포상권" 으로
-    # 저장되는 경우가 있어서 양쪽을 같은 규칙으로 눌러 놓고 비교한다.
-    # 지워도 상권/자치구 구분은 유지된다 ("점포상권" vs "점포자치구").
+    # Drop brackets and hyphens too: depending on the download path "(점포-상권)" is sometimes saved as
+    # "점포상권". Both sides are normalized the same way. The commercial-area vs district tables
+    # stay distinguishable ("점포상권" vs "점포자치구").
     for ch in " _()-":
         name = name.replace(ch, "")
     return name
 
-# 괄호 안 테이블명으로 정확히 구분 (자치구 버전과 절대 안 겹침)
+# Tables are told apart by the table name inside the brackets (never overlaps with the district versions).
 TABLE_MARKER = {
     "store":    "(점포-상권)",
     "sales":    "(추정매출-상권)",
     "area":     "(영역-상권)",
     "flow":     "(길단위인구-상권)",
     "facility": "(집객시설-상권)",
-    "change":   "(상권변화지표-상권)",   # 기준선 전용 — 피처로는 절대 쓰지 않는다
+    "change":   "(상권변화지표-상권)",   # benchmark only; never used as a feature
 }
+_YEAR_TOKENS = ["2023년", "2024년", "2025년", "2026년"]
 
-# key → (테이블, 연도표기 또는 None=연도표기 없는 최신 파일)
+# key -> (table, year token, or None = the latest file without a year token)
 FILE_SPEC = {
     "store_2023":  ("store", "2023년"),
     "store_2024":  ("store", "2024년"),
@@ -49,7 +56,112 @@ FILE_SPEC = {
     "change":      ("change", None),
 }
 
-_YEAR_TOKENS = ["2023년", "2024년", "2025년", "2026년"]
+# Source column -> English name. Only these columns are carried into the project; every other
+# source column is dropped at load. Names and codes of commercial areas / administrative dongs are
+# deliberately NOT carried (Korean proper names; join `area_code` to the source to get them).
+COL_MAP = {
+    "기준_년분기_코드": "quarter_code",
+    "상권_구분_코드": "area_type_code",
+    "상권_구분_코드_명": "area_type_name",
+    "상권_코드": "area_code",
+    "자치구_코드": "district_code",
+    "자치구_코드_명": "district_name",
+    "행정동_코드": "admin_dong_code",
+    "엑스좌표_값": "x_coord",
+    "와이좌표_값": "y_coord",
+    "영역_면적": "area_size",
+    "서비스_업종_코드": "service_code",
+    "서비스_업종_코드_명": "service_name",
+    "전체_점포_수": "store_count",
+    "일반_점포_수": "nonfranchise_store_count",
+    "프랜차이즈_점포_수": "franchise_store_count",
+    "점포_수": "legacy_nonfranchise_store_count",
+    "유사_업종_점포_수": "legacy_total_store_count",
+    "개업_점포_수": "opening_count",
+    "폐업_점포_수": "closure_count",
+    "집객시설_수": "attracting_facility_count",
+    "지하철_역_수": "subway_station_count",
+    "당월_매출_금액": "monthly_sales",
+    "당월_매출_건수": "monthly_sales_count",
+    "총_유동인구_수": "foot_traffic_total",
+    "연령대_20_유동인구_수": "foot_traffic_age_20",
+    "연령대_30_유동인구_수": "foot_traffic_age_30",
+    "연령대_60_이상_유동인구_수": "foot_traffic_age_60_plus",
+    "시간대_11_14_유동인구_수": "foot_traffic_time_11_14",
+    "시간대_17_21_유동인구_수": "foot_traffic_time_17_21",
+    "시간대_21_24_유동인구_수": "foot_traffic_time_21_24",
+    "토요일_유동인구_수": "foot_traffic_sat",
+    "일요일_유동인구_수": "foot_traffic_sun",
+    "상권_변화_지표": "area_change_indicator",
+    "운영_영업_개월_평균": "avg_operating_months",
+    "서울_운영_영업_개월_평균": "seoul_avg_operating_months",
+}
+assert len(set(COL_MAP.values())) == len(COL_MAP), "two source columns map to the same English name"
+
+# The ten food categories are chosen by code (the codes stay the same even if Seoul renames a category).
+# Source name -> English name; the source name is only used to check that the file still means what we think.
+SVC_SOURCE = {
+    "CS100001": "한식음식점",
+    "CS100002": "중식음식점",
+    "CS100003": "일식음식점",
+    "CS100004": "양식음식점",
+    "CS100005": "제과점",
+    "CS100006": "패스트푸드점",
+    "CS100007": "치킨전문점",
+    "CS100008": "분식전문점",
+    "CS100009": "호프-간이주점",
+    "CS100010": "커피-음료",
+}
+SVC_EN = {
+    "한식음식점": "Korean restaurants",
+    "중식음식점": "Chinese restaurants",
+    "일식음식점": "Japanese restaurants",
+    "양식음식점": "Western restaurants",
+    "제과점": "Bakeries",
+    "패스트푸드점": "Fast-food restaurants",
+    "치킨전문점": "Fried-chicken shops",
+    "분식전문점": "Korean snack-food restaurants",
+    "호프-간이주점": "Beer and casual pubs",
+    "커피-음료": "Coffee and beverages",
+}
+AREA_TYPE_EN = {
+    "골목상권": "neighborhood commercial area",
+    "발달상권": "developed commercial area",
+    "전통시장": "traditional market",
+    "관광특구": "tourist special zone",
+}
+DISTRICT_EN = {
+    "강남구": "Gangnam-gu", "강동구": "Gangdong-gu", "강북구": "Gangbuk-gu", "강서구": "Gangseo-gu",
+    "관악구": "Gwanak-gu", "광진구": "Gwangjin-gu", "구로구": "Guro-gu", "금천구": "Geumcheon-gu",
+    "노원구": "Nowon-gu", "도봉구": "Dobong-gu", "동대문구": "Dongdaemun-gu", "동작구": "Dongjak-gu",
+    "마포구": "Mapo-gu", "서대문구": "Seodaemun-gu", "서초구": "Seocho-gu", "성동구": "Seongdong-gu",
+    "성북구": "Seongbuk-gu", "송파구": "Songpa-gu", "양천구": "Yangcheon-gu", "영등포구": "Yeongdeungpo-gu",
+    "용산구": "Yongsan-gu", "은평구": "Eunpyeong-gu", "종로구": "Jongno-gu", "중구": "Jung-gu",
+    "중랑구": "Jungnang-gu",
+}
+# =====================================================================================
+# END SOURCE NAMES
+# =====================================================================================
+
+# -- Category order (fixed) ---------------------------------------------------------
+# groupby / pivot / get_dummies / sort_values follow the order of a Categorical, so every
+# category column is converted once at load. The order below is the one the pipeline had when the
+# source names were still Korean (sorted by the Korean name), kept so that row order, dummy
+# column order and every number stay the same after the rename. It does NOT follow the
+# English names' alphabetical order.
+SVC_CODES = {c: SVC_EN[k] for c, k in SVC_SOURCE.items()}      # code -> English name, in code order
+FOOD = list(SVC_CODES.values())
+SVC_ORDER = [SVC_EN[k] for k in sorted(SVC_EN)]
+AREA_TYPE_ORDER = [AREA_TYPE_EN[k] for k in sorted(AREA_TYPE_EN)]
+DISTRICT_ORDER = [DISTRICT_EN[k] for k in sorted(DISTRICT_EN)]
+CATEGORY_ORDER = {
+    "service_name": SVC_ORDER,
+    "area_type_name": AREA_TYPE_ORDER,
+    "area_type": AREA_TYPE_ORDER,
+    "district_name": DISTRICT_ORDER,
+    "district": DISTRICT_ORDER,
+}
+_CARRIED = set(COL_MAP.values())
 
 
 def _find_file(key: str) -> Path:
@@ -62,7 +174,7 @@ def _find_file(key: str) -> Path:
         if marker not in norm:
             continue
         if year is None:
-            # 연도 표기가 전혀 없는 파일만 (최신/누적 파일)
+            # only files with no year token at all (the latest / cumulative file)
             if not any(_normalize(y) in norm for y in _YEAR_TOKENS):
                 candidates.append(f)
         else:
@@ -70,14 +182,14 @@ def _find_file(key: str) -> Path:
                 candidates.append(f)
 
     if len(candidates) == 0:
-        all_files = "\n".join(f"    - {f.name}" for f in sorted(RAW.glob("*.csv"))) or "    (파일 없음)"
+        all_files = "\n".join(f"    - {f.name}" for f in sorted(RAW.glob("*.csv"))) or "    (no files)"
         raise FileNotFoundError(
-            f"\n[{key}] 테이블마커={TABLE_MARKER[table]!r} 연도={year!r} 조건에 맞는 파일 없음.\n"
-            f"  {RAW} 안의 실제 파일:\n{all_files}"
+            f"\n[{key}] no file matches table marker={TABLE_MARKER[table]!r}, year={year!r}.\n"
+            f"  Files found in {RAW}:\n{all_files}"
         )
     if len(candidates) > 1:
         names = "\n".join(f"    - {c.name}" for c in candidates)
-        raise FileNotFoundError(f"\n[{key}] 후보가 여러 개입니다:\n{names}")
+        raise FileNotFoundError(f"\n[{key}] several candidate files:\n{names}")
     return candidates[0]
 
 class _FilePaths:
@@ -92,14 +204,56 @@ class _FilePaths:
             try:
                 yield k, self[k]
             except FileNotFoundError:
-                yield k, None   # 못 찾은 파일은 None으로 표시
+                yield k, None   # files that cannot be found are shown as None
 
 
 FILES = _FilePaths()
 
-# ── 분석 범위 ──────────────────────────────────
-# 적재 대상 13분기. 라벨 y(t) = [순증감(t+1) < 0] 은 t+1 이 이 목록에 있어야 만들어지므로
-# 라벨이 붙는 구간은 20231~20254 (12분기), 20261 은 라벨 없음(예측 대상)이다.
+
+def _translate_values(s, mapping, col):
+    """Source category values -> English. A value that is not in the table raises (it never passes through)."""
+    unknown = sorted(set(s.dropna().unique()) - set(mapping))
+    if unknown:
+        raise ValueError(f"{col}: values not in the mapping table: {unknown}")
+    return s.map(mapping)
+
+
+def standardize_source(df):
+    """Rename source columns to English, drop columns the project never uses, translate category values
+    (strictly) and fix the category order. Called right after reading each source file."""
+    import pandas as pd
+    df = df.rename(columns=COL_MAP)
+    df = df[[c for c in df.columns if c in _CARRIED]].copy()
+    if "area_type_name" in df:
+        df["area_type_name"] = _translate_values(df["area_type_name"], AREA_TYPE_EN, "area_type_name")
+    if "district_name" in df:
+        df["district_name"] = _translate_values(df["district_name"], DISTRICT_EN, "district_name")
+    if "service_name" in df and "service_code" in df:
+        # only the ten food categories are named; the other categories are never used by name
+        food = df["service_code"].isin(SVC_SOURCE)
+        got = df.loc[food, ["service_code", "service_name"]].drop_duplicates()
+        bad = got[got["service_name"] != got["service_code"].map(SVC_SOURCE)]
+        if len(bad):
+            raise ValueError(f"service_name no longer matches the expected source name for: {bad.values.tolist()}")
+        df["service_name"] = df["service_name"].where(food).map(SVC_EN)
+    for col, order in CATEGORY_ORDER.items():
+        if col in df:
+            df[col] = pd.Categorical(df[col], categories=order, ordered=True)
+    return df
+
+
+def dummies(s, prefix, drop_first=False):
+    """get_dummies that follows the fixed category order and, like the pre-rename code, only creates
+    columns for categories that occur in `s` (a Categorical would otherwise add all-zero columns)."""
+    import pandas as pd
+    d = pd.get_dummies(s, prefix=prefix)
+    d = d.loc[:, d.any()]
+    return d.iloc[:, 1:] if drop_first else d
+
+
+# -- Analysis scope -------------------------------
+# 13 quarters are loaded. The label y(t) = [net decline in t+1] needs t+1 to be in this list, so the
+# labeled span is 20231-20254 (12 quarters) and 20261 has no label (the forecast target).
 QUARTERS = [
     20231, 20232, 20233, 20234,
     20241, 20242, 20243, 20244,
@@ -107,140 +261,115 @@ QUARTERS = [
     20261
 ]
 
-# ── 시간 분할 ──────────────────────────────────
-# 한 행은 (상권, 업종, 피처분기 t) 이고 라벨은 y(t) = [순감소 in t+1] 이다.
-# 피처분기와 타깃분기가 한 칸 어긋나므로, 아래를 단일 진실 공급원으로 쓴다.
+# -- Time split -----------------------------------
+# A row is (commercial area, service category, feature quarter t) and the label is y(t) = [net decline in t+1].
+# The feature quarter and the target quarter are one step apart, so the table below is the single source of truth.
 #
-#   용도   피처분기 t        타깃분기 t+1     라벨
-#   학습   20231 ~ 20253    20232 ~ 20254   있음
-#   검증   20254            20261           있음
-#   예측   20261            20262           없음
+#   purpose   feature quarter t   target quarter t+1   label
+#   train     20231 ~ 20253       20232 ~ 20254        yes
+#   valid     20254               20261                yes
+#   score     20261               20262                no
 #
-# ⚠️ 학습에 VALID_Q(20254) 를 넣으면 20261 결과를 미리 보게 되어 누수가 난다.
-SCORE_Q = 20261                                    # 예측 대상 (라벨 없음)
-VALID_Q = 20254                                    # 검증 (타깃 = SCORE_Q)
+# WARNING: putting VALID_Q (20254) in the training set leaks the 20261 outcome.
+SCORE_Q = 20261                                    # forecast target (no label)
+VALID_Q = 20254                                    # validation (target = SCORE_Q)
 TRAIN_QUARTERS = [q for q in QUARTERS if q not in (VALID_Q, SCORE_Q)]
 LABELED_QUARTERS = [q for q in QUARTERS if q != SCORE_Q]
 
-# 롤링 오리진 검증 — 학습 종료 분기를 밀며 반복. 각 원소가 그 반복의 검증 피처분기.
+# Rolling-origin validation: repeat while moving the end of the training span. Each element is that repetition's validation feature quarter.
 ROLLING_VALID = [20243, 20244, 20251, 20252, 20253, 20254]
 
-# 업종은 코드로 지정한다. 서울시가 표기명을 바꿔도 코드는 유지되므로
-# 이름 기반 필터보다 안전하다. (2023~2026Q1 전 구간 대응 동일함을 확인)
-SVC_CODES = {
-    "CS100001": "한식음식점",
-    "CS100002": "중식음식점",
-    "CS100003": "일식음식점",
-    "CS100004": "양식음식점",
-    "CS100005": "제과점",
-    "CS100006": "패스트푸드점",
-    "CS100007": "치킨전문점",
-    "CS100008": "분식전문점",
-    "CS100009": "호프-간이주점",
-    "CS100010": "커피-음료",
-}
-FOOD = list(SVC_CODES.values())
-
-# ── 점포 테이블 스키마 통일 ─────────────────────
-# 2023·2024 파일과 2025~ 파일은 컬럼명만 다른 게 아니라 '점포_수'의 의미가 다르다.
+# -- Store table schema harmonization ----------------------
+# The 2023-2024 files and the 2025+ files differ not only in column names: the meaning of the store count differs.
 #
-#   2023·2024 :  유사_업종_점포_수 = 점포_수     + 프랜차이즈_점포_수   (일치율 1.000)
-#   2025~     :  전체_점포_수     = 일반_점포_수 + 프랜차이즈_점포_수   (일치율 1.000)
+#   2023, 2024 :  legacy_total_store_count = legacy_nonfranchise_store_count + franchise_store_count   (match rate 1.000)
+#   2025+      :  store_count              = nonfranchise_store_count        + franchise_store_count   (match rate 1.000)
 #
-# 즉 구파일의 '점포_수'는 총 점포수가 아니라 비프랜차이즈 점포수다.
-# 2025년 개편에서 이 컬럼이 '일반_점포_수'로 개명되고, 총수에 '전체_점포_수'라는
-# 이름이 새로 붙었다. 아래 매핑으로 신파일 이름에 맞춘다.
+# So the old files' `legacy_nonfranchise_store_count` is not the total store count but the
+# non-franchise count. The 2025 revision renamed it to `nonfranchise_store_count` and gave the total the name
+# `store_count`. The mapping below aligns the old files with the new names.
 STORE_RENAME_OLD = {
-    "점포_수":           "일반_점포_수",
-    "유사_업종_점포_수":  "전체_점포_수",
+    "legacy_nonfranchise_store_count": "nonfranchise_store_count",
+    "legacy_total_store_count":        "store_count",
 }
 
-# 점포 테이블에서 남길 컬럼
+# Columns kept from the store table
 STORE_KEEP = [
-    "기준_년분기_코드", "상권_구분_코드_명", "상권_코드", "상권_코드_명",
-    "서비스_업종_코드", "서비스_업종_코드_명",
-    "전체_점포_수", "일반_점포_수", "프랜차이즈_점포_수",
-    "개업_점포_수", "폐업_점포_수",
+    "quarter_code", "area_type_name", "area_code",
+    "service_code", "service_name",
+    "store_count", "nonfranchise_store_count", "franchise_store_count",
+    "opening_count", "closure_count",
 ]
-# 매출 테이블에서 남길 컬럼 (원본 55개 중)
+# Columns kept from the sales table (out of the 55 source columns)
 SALES_KEEP = [
-    "기준_년분기_코드", "상권_코드", "서비스_업종_코드",
-    "당월_매출_금액", "당월_매출_건수",
+    "quarter_code", "area_code", "service_code",
+    "monthly_sales", "monthly_sales_count",
 ]
 
-TARGET_TYPE = "골목상권"
-TREAT_SVC = "한식음식점"
+TARGET_TYPE = "neighborhood commercial area"
+TREAT_SVC = "Korean restaurants"
 MIN_STORES = 5
-COVARIATES = ["log_점포수", "log_유동인구", "log_면적", "log_집객시설"]
+COVARIATES = ["log_store_count", "log_foot_traffic", "log_area_size", "log_attracting_facilities"]
 
 
-# ── 예측 피처 (STEP 8·9 공용) ───────────────────
-# 학습(STEP 8)과 예측(STEP 9)이 반드시 같은 코드로 피처를 만들어야 한다.
-# 한쪽만 고치면 train/serve skew 가 생기고, 그건 조용히 틀린 예측을 만든다.
+# -- Prediction features (shared by STEP 8 and 9) -----------------
+# Training (STEP 8) and forecasting (STEP 9) must build the features with the same code.
+# Fixing only one side creates train/serve skew, which silently produces wrong predictions.
 #
-# ⚠️ 분기 더미는 넣지 않는다. 예측 대상 분기(20261)는 학습에 없는 분기라
-#    더미를 만들 수 없고, 만들어도 전부 0 이 되어 의미가 없다.
+# WARNING: no quarter dummies. The forecast quarter (20261) is not in the training data, so its
+# dummy cannot be created, and if it were it would be all zeros and meaningless.
 
 PRED_NUM = [
-    "log_점포수", "log_유동인구", "log_면적", "log_집객시설",
-    "외식_비중", "프랜차이즈_비율",
-    "개업률", "폐업률", "순증감률", "순감소_현재",
-    "log_점포당매출", "매출_결측",
+    "log_store_count", "log_foot_traffic", "log_area_size", "log_attracting_facilities",
+    "food_service_share", "franchise_share",
+    "opening_rate", "closure_rate", "net_change_rate", "net_decline_now",
+    "log_sales_per_store", "sales_missing",
 ]
 
 
 def build_features(f):
-    """03_panel.pkl / 03_score.pkl 에 예측용 파생 변수를 붙인다."""
+    """Attach the derived prediction variables to 03_panel.pkl / 03_score.pkl."""
     import numpy as np
     f = f.copy()
-    denom = f["전체_점포_수"].replace(0, np.nan)
-    f["개업률"]   = f["개업_점포_수"] / denom
-    f["폐업률"]   = f["폐업_점포_수"] / denom
-    f["순증감률"] = (f["개업_점포_수"] - f["폐업_점포_수"]) / denom
-    if "순감소_현재" not in f.columns:
-        f["순감소_현재"] = ((f["개업_점포_수"] - f["폐업_점포_수"]) < 0).astype(int)
-    f["log_점포당매출"] = np.log1p(f["당월_매출_금액"] / denom)
-    f["매출_결측"]      = f["당월_매출_금액"].isna().astype(float)
+    denom = f["store_count"].replace(0, np.nan)
+    f["opening_rate"]   = f["opening_count"] / denom
+    f["closure_rate"]   = f["closure_count"] / denom
+    f["net_change_rate"] = (f["opening_count"] - f["closure_count"]) / denom
+    if "net_decline_now" not in f.columns:
+        f["net_decline_now"] = ((f["opening_count"] - f["closure_count"]) < 0).astype(int)
+    f["log_sales_per_store"] = np.log1p(f["monthly_sales"] / denom)
+    f["sales_missing"]      = f["monthly_sales"].isna().astype(float)
     return f
 
 
 def design_matrix(f, columns=None):
-    """설계행렬. columns 를 주면 그 순서·구성에 맞춰 재정렬한다(없는 더미는 0)."""
+    """Design matrix. With `columns`, reorder to that order and composition (missing dummies become 0)."""
     import pandas as pd
     X = pd.concat([
         f[PRED_NUM],
-        pd.get_dummies(f["서비스_업종_코드_명"], prefix="svc").astype(float),
-        pd.get_dummies(f["자치구"],             prefix="gu").astype(float),
-        pd.get_dummies(f["상권유형"],           prefix="tp").astype(float),
+        dummies(f["service_name"], prefix="svc").astype(float),
+        dummies(f["district"], prefix="gu").astype(float),
+        dummies(f["area_type"], prefix="tp").astype(float),
     ], axis=1)
     return X if columns is None else X.reindex(columns=columns, fill_value=0.0)
 
 
-def set_korean_font():
+def set_plot_style():
     import matplotlib.pyplot as plt
-    from matplotlib import font_manager
-    installed = {f.name for f in font_manager.fontManager.ttflist}
-    for cand in ["Malgun Gothic", "AppleGothic", "NanumGothic",
-                 "Noto Sans CJK KR", "Noto Sans CJK JP"]:
-        if cand in installed:
-            plt.rcParams["font.family"] = cand
-            break
-    else:
-        print("[경고] 한글 폰트를 찾지 못했습니다.")
-    plt.rcParams["axes.unicode_minus"] = False
+    plt.rcParams["axes.unicode_minus"] = False   # plain hyphen-minus on axes
     plt.rcParams["figure.dpi"] = 110
 
 
-# ── 재현성 도구 ────────────────────────────────
-# 동점이 있을 때 행 순서에 따라 결과가 달라지지 않도록, 동점은 아래 키 순서로 가른다.
-TIE_KEYS = ["상권_코드", "서비스_업종_코드", "분기idx"]
+# -- Reproducibility tools ----------------------------
+# So that ties never depend on row order, ties are broken by the key order below.
+TIE_KEYS = ["area_code", "service_code", "quarter_idx"]
 
 
 def stable_rank(frame, col, keys=None):
-    """col 기준 1..n 순위. 동점은 keys 순서로 가른다 (rank(method="first") 는 행 순서를 따라가서 쓰지 않는다)."""
+    """Rank 1..n by `col`. Ties are broken by the order of `keys` (rank(method="first") follows row order, so it is not used)."""
     import numpy as np
     import pandas as pd
-    assert frame.index.is_unique, "인덱스가 유일해야 합니다"
+    assert frame.index.is_unique, "the index must be unique"
     ks = [k for k in (TIE_KEYS if keys is None else keys) if k in frame.columns]
     order = frame.sort_values([col] + ks, kind="mergesort").index
     r = pd.Series(np.arange(1, len(frame) + 1, dtype=float), index=order).reindex(frame.index)
@@ -248,15 +377,15 @@ def stable_rank(frame, col, keys=None):
 
 
 def rank_order(score, frame, keys=None):
-    """점수 내림차순 위치 배열. 점수가 같으면 keys 순서로 가른다 (np.argsort(-score) 의 동점 순서는 불안정하다)."""
+    """Positions in descending score order. Equal scores are broken by the order of `keys` (the tie order of np.argsort(-score) is unstable)."""
     import numpy as np
     ks = [k for k in (TIE_KEYS if keys is None else keys) if k in frame.columns]
     tmp = frame[ks].reset_index(drop=True).assign(_s=-np.asarray(score, dtype=float))
     return tmp.sort_values(["_s"] + ks, kind="mergesort").index.to_numpy()
 
 
-def nn_match(df, caliper_mult=0.2, replace=False, seed=SEED, exact="기준_년분기_코드"):
-    """logit(PS) 기준 1:1 최근접 매칭. (처리 index, 대조 index) 쌍과 캘리퍼를 반환. STEP 6·9 공용."""
+def nn_match(df, caliper_mult=0.2, replace=False, seed=SEED, exact="quarter_code"):
+    """1:1 nearest-neighbor matching on logit(PS). Returns the (treated index, control index) pairs and the caliper. Shared by STEP 6 and 9."""
     import numpy as np
     import pandas as pd
     cal = caliper_mult * df["logit_ps"].std()
@@ -271,9 +400,9 @@ def nn_match(df, caliper_mult=0.2, replace=False, seed=SEED, exact="기준_년�
 
     for _, sub in groups:
         if keys:
-            sub = sub.sort_values(keys, kind="mergesort")      # 셔플 입력 순서를 행 순서와 무관하게 고정
-        tr = sub[sub["처리"] == 1].sample(frac=1, random_state=seed)
-        ct = sub[sub["처리"] == 0]
+            sub = sub.sort_values(keys, kind="mergesort")      # fix the input order of the shuffle so it does not depend on row order
+        tr = sub[sub["treated"] == 1].sample(frac=1, random_state=seed)
+        ct = sub[sub["treated"] == 0]
         if len(ct) == 0:
             continue
         cl, cidx = ct["logit_ps"].to_numpy(), ct.index.to_numpy()
@@ -283,10 +412,10 @@ def nn_match(df, caliper_mult=0.2, replace=False, seed=SEED, exact="기준_년�
         for ti, tv in zip(tr.index, tr["logit_ps"].to_numpy()):
             pos = np.searchsorted(cl, tv)
             l, r, best = pos - 1, pos, -1
-            while l >= 0 or r < len(cl):          # 삽입 위치에서 좌우로 확장
+            while l >= 0 or r < len(cl):          # expand left and right from the insertion position
                 dl = tv - cl[l] if l >= 0      else np.inf
                 dr = cl[r] - tv if r < len(cl) else np.inf
-                if min(dl, dr) > cal:             # 캘리퍼 밖 → 포기
+                if min(dl, dr) > cal:             # outside the caliper: give up
                     break
                 if dl <= dr:
                     if replace or not used[l]: best = l; break
@@ -303,8 +432,8 @@ def nn_match(df, caliper_mult=0.2, replace=False, seed=SEED, exact="기준_년�
 
 
 def tie_random_precision(score, y, ks, rng, reps=200):
-    """점수 내림차순 top-K 정밀도를, 같은 점수끼리만 무작위로 섞어 reps 번 계산한다. 반환 (reps, len(ks)).
-    점포 수처럼 동점이 많은 점수는 '누가 먼저 뽑히는가'가 임의이므로 결정적 한 번의 값 대신 분포로 본다."""
+    """Top-K precision in descending score order, computed `reps` times with random shuffling only among equal scores. Returns (reps, len(ks)).
+    For a score with many ties such as the store count, "who is picked first" is arbitrary, so we look at a distribution instead of one deterministic value."""
     import numpy as np
     score = np.asarray(score, dtype=float)
     y = np.asarray(y, dtype=float)
@@ -312,26 +441,26 @@ def tie_random_precision(score, y, ks, rng, reps=200):
     n = len(score)
     out = np.empty((reps, len(ks)))
     for r in range(reps):
-        order = np.lexsort((rng.random(n), -score))      # 1순위 -점수, 2순위 무작위 (동점 안에서만 섞임)
+        order = np.lexsort((rng.random(n), -score))      # first key: -score, second key: random (shuffles only within ties)
         cs = np.cumsum(y[order])
         out[r] = cs[ks - 1] / ks
     return out
 
 
 def tie_report(score, ks, name):
-    """점수의 동점 현황과, 각 K 경계에서 동점 묶음이 잘리는지 보고한다."""
+    """Report the tie situation of the score and whether a group of ties is cut at each K boundary."""
     import numpy as np
     import pandas as pd
     score = np.asarray(score, dtype=float)
     vals, cnt = np.unique(score, return_counts=True)
-    base = {"점수": name, "칸수": len(score), "고유값 수": len(vals),
-            "동점 칸 수": int(cnt[cnt > 1].sum()), "최대 동점 크기": int(cnt.max())}
+    base = {"score": name, "n_cells": len(score), "n_unique": len(vals),
+            "n_tied_cells": int(cnt[cnt > 1].sum()), "max_tie_size": int(cnt.max())}
     desc = np.sort(score)[::-1]
     rows = []
     for K in ks:
         thr = desc[K - 1]
         tie_n = int((score == thr).sum())
         taken = int(K - (score > thr).sum())
-        rows.append({**base, "K": K, "경계 동점 칸수": tie_n, "그중 선택": taken,
-                     "경계가 동점을 자름": tie_n > taken})
+        rows.append({**base, "K": K, "n_boundary_tied_cells": tie_n, "n_selected_of_tied": taken,
+                     "boundary_cuts_tie": tie_n > taken})
     return pd.DataFrame(rows)
