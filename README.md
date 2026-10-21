@@ -38,7 +38,7 @@ The −5.57 pp value should not be presented as a single effect for all Korean r
 - Commercial-district consultants advising businesses or prospective entrepreneurs
 - Users of public commercial-area dashboards who need to interpret industry rankings
 
-Seoul's commercial-area service provides counts of business openings and closures, and a separate change indicator (HH, HL, LH, LL). It does not publish a net-decline flag. In this project, a cell has **net decline** in the next quarter when the number of openings is **smaller** than the number of closures; this is the project's own label. The use cases above are assumptions: this README does not claim that any agency ranks areas or allocates support by net decline.
+Seoul's commercial-area service provides counts of business openings and closures, and a separate area-level change indicator (HH, HL, LH, LL; defined in section 4.H). It does not publish a net-decline flag. In this project, a cell has **net decline** in the next quarter when the number of openings is **smaller** than the number of closures; this is the project's own label. The use cases above are assumptions: this README does not claim that any agency ranks areas or allocates support by net decline.
 
 Korean restaurants are common in neighborhood commercial areas, averaging **21.3 stores per cell** in the source analysis. Larger cells have more opportunities for an opening or closure event. A high frequency of net decline does not, by itself, imply a high probability that any individual restaurant will close.
 
@@ -157,7 +157,7 @@ I therefore matched on four observable factors:
 
 Sales were used in supporting regressions with missingness handling or in robustness checks, rather than as a required matching covariate.
 
-### 3.5 Calculate area totals before the sector filter
+### 3.5 Area totals are calculated before the sector filter
 
 The area's total store count must describe **all shops in the area**, not only the 10 food-service categories retained for analysis. Total and food-service store counts were computed before filtering categories. I also excluded five district-level source tables as matching predictors because their values were constant across commercial areas within the same district.
 
@@ -351,7 +351,7 @@ I compared the distributions of each sector's net-decline frequency across comme
 
 **Eight of ten** sector-level tests remained significant at the Bonferroni threshold. The observed area-type differences were relatively pronounced for pubs (ε² = 0.1202) and very small for fried-chicken shops (ε² = 0.0002).
 
-This does not mean chicken shops are unaffected by *location in every sense*. It means the particular **commercial-area type classification** explained little variation in their observed net-decline frequencies. I did not test delivery dependence, store-level rent, or every possible aspect of location.
+The result applies only to the particular **commercial-area type classification**, which explained little variation in chicken shops' observed net-decline frequencies. It does not show that location is irrelevant for them: I did not test delivery dependence, store-level rent, or other aspects of location.
 
 ### 4.G Forecasting performance for net decline and closures
 
@@ -379,7 +379,9 @@ I used the mean across **six rolling validation quarters, 0.666 ± 0.011**, as t
 
 ### 4.H Compare against Seoul's published area-change indicator
 
-In addition to internal baselines, I used Seoul's published **commercial-area change classification (HH, HL, LH, LL)** as an external benchmark. I read HL as a contraction signal and tested whether HL identified cells with next-quarter net decline.
+In addition to internal baselines, I used Seoul's published **commercial-area change indicator (HH, HL, LH, LL)** as an external benchmark. The indicator grades each commercial area by comparing the average operating months of its surviving businesses and of its closed businesses with the Seoul-wide averages in the same quarter. HL means that the surviving businesses' average is above the Seoul average and the closed businesses' average is below it; the official description is that incumbent businesses in the area are competitive. The source file's label for HL translates as "contracting", but the grade is published as reference information for business start-up and entry decisions, not as a net-decline forecast. I used HL only as a simple flag and tested whether it identified cells with next-quarter net decline, which is this project's own label. The file has no industry column, so each cell takes the grade of its commercial area.
+
+The test joins the 2025 Q4 grade to the 2026 Q1 outcome (the validation quarter, 5,479 cells).
 
 | Published indicator | Cells | Observed next-quarter net-decline rate | Lift |
 |---|---:|---:|---:|
@@ -388,9 +390,9 @@ In addition to internal baselines, I used Seoul's published **commercial-area ch
 | LH | 790 | 22.9% | 0.882 |
 | LL | 2,263 | 29.4% | **1.133** |
 
-For **this particular prediction target and evaluation sample**, HL had lift below 1. It did not work well as a stand-alone next-quarter net-decline screening rule. That finding should not be generalized to every purpose for which Seoul publishes this indicator; its original function may differ from the prediction problem studied here.
+For **this particular prediction target and evaluation sample**, HL had lift 0.937 (a net-decline rate of 24.3% against a base rate of 26.0%). That is close to 1 and comes from a single validation quarter, so HL gave no useful signal as a stand-alone next-quarter net-decline screening rule in this quarter, and the result should not be read as clearly different from random selection. Cells from the same commercial area share a grade, so the uncertainty is larger than the cell count suggests. The finding should not be generalized to every purpose for which Seoul publishes this indicator; it was not designed as a net-decline forecast.
 
-I used the published classification **only as a benchmark**. It incorporates information related to closures, so including it directly as a feature could leak target-related information.
+I used the published classification **only as a benchmark**. It is built from closed businesses' operating months (among other inputs), so using it as a feature could make the evaluation circular and leak target-related information.
 
 A separate variable in the same source, `avg_operating_months` (average operating months of active businesses), was worth a preliminary check:
 
@@ -528,7 +530,7 @@ Cross-sectional coefficients should not be translated into a precise causal clos
 | Evidence | Sector rank correlation **−0.370**; Korean restaurants first by net decline but tenth (last) by closure rate |
 | Evaluation | Test whether users interpret relative sector risks more accurately |
 
-A clear statement of purpose is also needed wherever Seoul's area-change indicator is used: for this specific next-quarter net-decline screening task, HL had lift **0.937**.
+A clear statement of purpose is also needed wherever Seoul's area-change indicator is used. The indicator was built to classify areas by business duration (operating months), not to forecast net decline; for this next-quarter net-decline screening task, HL had lift **0.937** in the single validation quarter tested.
 
 ### Proposal 4. Tailor the first diagnostic questions by sector
 
@@ -650,6 +652,7 @@ Useful presentation files include `forecast_2026Q2_cell.csv` for candidate cells
 | **ε²** | Effect-size summary for differences compared using Kruskal–Wallis |
 | **Lift** | Event prevalence among selected observations divided by the reference prevalence |
 | **Precision** | Share of selected risk-positive cells that actually had the evaluated event |
+| **Change indicator (HH/HL/LH/LL)** | Seoul's grade for each commercial area, comparing the average operating months of surviving and closed businesses with Seoul-wide averages; HL = surviving above, closed below; one grade per area and quarter |
 | **Leakage** | Future outcome information entering model training or features |
 | **Train/serve skew** | Features being calculated differently for training and prediction |
 | **Rolling validation** | Repeated evaluation with progressively updated time cutoffs |
