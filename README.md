@@ -10,12 +10,12 @@ Full case study: https://jiwoon-oh.github.io/portfolio/projects/seoul-closure-ri
 
 ## 1. Results at a glance
 
-Korean restaurants initially appeared to have a higher next-quarter net-decline rate than other food-service categories in Seoul's neighborhood commercial areas. However, the comparison reversed after matching areas on store count and other observable conditions. Looking more closely, even that negative average differed sharply with store count.
+Korean restaurants initially appeared to have a higher next-quarter net-decline rate than other food-service categories in Seoul's neighborhood commercial areas. However, the sign of the difference reversed after matching areas on store count and other observable conditions. The matched average also differed sharply by store count.
 
 | Question | Result | How to read it |
 |---|---|---|
 | Unadjusted net-decline rate | Korean restaurants **25.3%** versus others **22.9%** | Initial gap: +2.4 percentage points (pp) |
-| Selecting the highest-ranked sector | Permutation **p = 0.344** | The apparent leader was not robust to selection uncertainty |
+| Selecting the highest-ranked sector | Permutation **p = 0.344** | The top rank was not distinguishable from the selection effect |
 | Matched average difference | **−5.57 pp**, 95% CI **[−7.08, −4.17]** | Applies to comparable, successfully matched cells |
 | Other estimators | Doubly robust **−6.00**, counterfactual **−6.01**, alternative label **−8.71 pp** | The estimated mean direction remained negative |
 | Difference by matched size stratum | **−13.6 pp** in the smallest stratum to **+1.8 pp** in the largest; the three smallest strata are clearly negative, while the two largest have intervals that include zero | The mean hides meaningful heterogeneity |
@@ -26,19 +26,19 @@ Korean restaurants initially appeared to have a higher next-quarter net-decline 
 
 **I marked H2 as partly supported, with a different direction from the prediction.** The original hypothesis expected the positive Korean-restaurant gap to narrow after matching store count and foot traffic. It instead shifted from +2.4 pp to −5.57 pp. Confounding was important, but the directional hypothesis was not met.
 
-The −5.57 pp value should never be presented as one fixed effect for all Korean restaurants. Store-count strata show different directions. Also, matching cannot eliminate unobserved factors such as rent, proprietor experience, and access to capital, so the comparison is not proof that changing restaurant category would cause the reported change.
+The −5.57 pp value should not be presented as a single effect for all Korean restaurants, because the store-count strata differ in direction. Also, matching adjusts only for observed covariates and cannot eliminate unobserved factors such as rent, proprietor experience, and access to capital, so the comparison does not establish that changing restaurant category would cause the reported change.
 
 ---
 
 ## 2. The business problem
 
-### Intended users
+### Potential users
 
-- District small-business support officers deciding which commercial areas to prioritize
+- District small-business support officers, if they prioritize commercial areas using a net-decline ranking (an assumed use case)
 - Commercial-district consultants advising businesses or prospective entrepreneurs
 - Users of public commercial-area dashboards who need to interpret industry rankings
 
-Seoul's commercial-area service provides counts of business openings and closures. In this project, a cell has **net decline** in the next quarter when the number of openings is **smaller** than the number of closures.
+Seoul's commercial-area service provides counts of business openings and closures, and a separate change indicator (HH, HL, LH, LL). It does not publish a net-decline flag. In this project, a cell has **net decline** in the next quarter when the number of openings is **smaller** than the number of closures; this is the project's own label. The use cases above are assumptions: this README does not claim that any agency ranks areas or allocates support by net decline.
 
 Korean restaurants are common in neighborhood commercial areas, averaging **21.3 stores per cell** in the source analysis. Larger cells have more opportunities for an opening or closure event. A high frequency of net decline does not, by itself, imply a high probability that any individual restaurant will close.
 
@@ -48,7 +48,7 @@ Korean restaurants are common in neighborhood commercial areas, averaging **21.3
 
 **Supporting Question 2.** Which area-level characteristics—sales, foot traffic, store concentration, and related factors—are associated with next-quarter net decline?
 
-I also explored whether a **commercial area × sector** risk score could be more useful for selecting support candidates than a broad sector-level ranking.
+I also explored whether, if support candidates were selected by risk, a **commercial area × sector** risk score could be more useful than a broad sector-level ranking.
 
 ## 3. Data and preparation
 
@@ -177,7 +177,7 @@ I excluded the validation feature quarter from training, because that row's labe
 
 ## 4. Findings and validation
 
-### 4.0 First check the distributions
+### 4.0 Distribution checks
 
 Next-quarter net decline is a binary outcome. Applying a normality test directly to a 0/1 label is not informative. For group comparisons, I instead calculated each `(area, sector)` cell's **net-decline frequency over up to 12 quarters** and required at least six observed quarters.
 
@@ -191,7 +191,7 @@ This left **5,687 distinct cells**, excluding **735** with insufficient history.
 
 Given skewness and the departures from normality, I used **Kruskal–Wallis** for the main distribution comparisons. Levene's test provided a separate check of variance differences. Kruskal–Wallis works on ranks and does not require normally distributed outcomes in each group.
 
-### 4.A Was Korean restaurants' top rank statistically meaningful?
+### 4.A Top rank versus the selection effect
 
 The raw next-quarter net-decline rate was **25.3% for Korean restaurants versus 22.9% for other food-service sectors**. But Korean restaurants were also selected *because they ranked highest*. Even if all sectors were identical in the population, the maximum observed group would tend to sit above the average by chance.
 
@@ -239,7 +239,7 @@ Doubly robust methods can help under their modeling assumptions, but a close res
 
 Around **29.3%** of Korean-restaurant cells, disproportionately including very large cells, did not have an appropriate comparison. The **−5.57 pp** estimate therefore summarizes matched, comparable cells and should not be generalized to every Korean-restaurant area.
 
-#### Does the matched average hide differences by size? Yes
+#### Differences by store-count stratum
 
 I divided the **7,043 matched pairs** into store-count quintiles.
 
@@ -259,7 +259,7 @@ The stratum-specific odds ratios were not compatible with a single common effect
 
 These are **stratified comparisons of the actual matched pairs**. They should not be mixed with the modeled dose-response or counterfactual exercise below, which changes covariate values in a fitted model.
 
-### 4.C Which variable drove the reversal?
+### 4.C Which covariate accounts for the modeled reversal
 
 I computed modeled differences while equalizing covariates one at a time.
 
@@ -291,7 +291,7 @@ For a log predictor, a one-unit increase means multiplying the original quantity
 
 Likewise, `p = 0.078` does not prove that foot traffic has exactly zero effect. It means this model did not distinguish its association from zero at the conventional 5% threshold.
 
-#### Why did foot traffic look weak for net decline?
+#### Foot traffic and net decline: openings and closures modeled separately
 
 More pedestrian traffic can accompany both more openings and more closures. Once we subtract openings from closures, some common movement may cancel out. I modeled the two counts separately using **negative binomial regression**, with a `log(store_count)` offset to take exposure to business events into account.
 
@@ -330,9 +330,9 @@ Because net decline cannot occur without an event, this is an exact decompositio
 | Any event occurred | **+1.483**, `p < 0.001` | 31,875 |
 | Net decline conditional on an event | +0.046, `p = 0.114` | 16,424 |
 
-Most of the strong store-count signal appeared in **whether an event occurred at all**, not whether the direction of change was negative after an event. It would be a mistake to infer that large cells are inherently safer from the last column alone, because those descriptive figures are not fully adjusted for different area compositions.
+Most of the strong store-count signal appeared in **whether an event occurred at all**, not whether the direction of change was negative after an event. The last column alone should not be read as showing that large cells are inherently safer, because those descriptive figures are not fully adjusted for different area compositions.
 
-### 4.F Do sectors differ in sensitivity to area type?
+### 4.F Sector differences in sensitivity to area type
 
 I compared the distributions of each sector's net-decline frequency across commercial-area types using Kruskal–Wallis tests and **epsilon-squared (ε²)** effect sizes. For 10 comparisons I used a Bonferroni threshold of `α = 0.005`.
 
@@ -355,7 +355,7 @@ This does not mean chicken shops are unaffected by *location in every sense*. It
 
 ### 4.G Forecasting performance for net decline and closures
 
-A predictive model is only useful if it improves on a simple alternative and works across time. I compared store-count-only rules, historical sector averages, and more detailed models, and evaluated the main classification model with **rolling-quarter validation**.
+To judge whether the model adds value, I checked whether it improves on a simple alternative and holds up across time. I compared store-count-only rules, historical sector averages, and more detailed models, and evaluated the main classification model with **rolling-quarter validation**.
 
 | Outcome/evaluation | Metric | Result | Benchmark |
 |---|---|---:|---|
@@ -371,7 +371,7 @@ A predictive model is only useful if it improves on a simple alternative and wor
 
 The **Brier score** measures squared errors in predicted probabilities, not just the order of predictions. **Poisson deviance** is suitable for the closure-count modeling task; 0.992 was an improvement on 1.002, though a small one. Lift is the share of cells with at least one closure among the top (bottom) 10% of cells by predicted closures, divided by the share across all cells; the store-count rule's values average 200 random orderings of tied cells.
 
-#### Why rolling validation is more important than a single quarter
+#### Rolling validation versus a single validation quarter
 
 The model was selected using the validation quarter: features from 2025 Q4 and labels from 2026 Q1. Its validation AUC of **0.669** could therefore be somewhat optimistic.
 
@@ -379,7 +379,7 @@ I used the mean across **six rolling validation quarters, 0.666 ± 0.011**, as t
 
 ### 4.H Compare against Seoul's published area-change indicator
 
-A benchmark made only from internal alternatives may miss how decisions are made in practice. I therefore compared the analysis with Seoul's published **commercial-area change classification (HH, HL, LH, LL)**. HL is commonly read as a contraction signal. I tested whether HL identified cells with next-quarter net decline.
+In addition to internal baselines, I used Seoul's published **commercial-area change classification (HH, HL, LH, LL)** as an external benchmark. I read HL as a contraction signal and tested whether HL identified cells with next-quarter net decline.
 
 | Published indicator | Cells | Observed next-quarter net-decline rate | Lift |
 |---|---:|---:|---:|
@@ -402,7 +402,7 @@ Its signal was modest, but it did not simply reproduce store count. I recorded i
 
 ### 4.I Operational evaluation: selecting the top K cells
 
-A district office cannot support every commercial area. It often needs a short list of 50, 100, or 200 candidates given a fixed budget. That makes **precision among the highest-scored K cells** more relevant to operations than AUC alone.
+Suppose a district office cannot support every commercial area and needs a short list of 50, 100, or 200 candidates given a fixed budget (an assumed scenario, not a documented process). In that situation, **precision among the highest-scored K cells** is more relevant than AUC alone.
 
 The comparison rule was simple: **rank cells by number of stores**.
 
@@ -438,9 +438,9 @@ The model's lift was above the rule's 95% range in all five size strata; its ave
 
 Care is needed not to mix evaluation setups. The **net-decline AUC (0.669)**, the **closure-count task's AUC (0.711)**, and **top-K precision (0.780)** summarize different targets or decisions and are not interchangeable measures.
 
-#### Why I excluded a seemingly impressive sector-ranking correlation
+#### Sector-ranking correlation not reported as performance evidence
 
-The closure-count model's rank correlation across the 10 categories in the validation quarter was **0.915** (neighborhood cells). I did not report it as performance evidence, because it rests on ten categories in a single quarter. Separately, single-quarter rankings of the net-decline label turned out to be noisy: split-half reliability was **0.212** for service category, **0.086** for district and **0.035** for district × service category. For six pooled quarters (out-of-fold; district × service category cells with at least 60 rows, 97 cells) the figures were **0.617**, **0.537** and **0.259**, so the last number is for a different set of cells. Single-quarter district-by-sector ranking tables should not be treated as stable outcomes.
+The closure-count model's rank correlation across the 10 categories in the validation quarter was **0.915** (neighborhood cells). I did not report it as performance evidence, because it rests on ten categories in a single quarter. Separately, single-quarter rankings of the net-decline label were noisy: split-half reliability was **0.212** for service category, **0.086** for district and **0.035** for district × service category. For six pooled quarters (out-of-fold; district × service category cells with at least 60 rows, 97 cells) the figures were **0.617**, **0.537** and **0.259**, so the last number is for a different set of cells. Single-quarter district-by-sector ranking tables should not be treated as stable outcomes.
 
 ### 4.J Predictions for 2026 Q2: 2,737 neighborhood cells
 
@@ -464,13 +464,13 @@ These closure rates and intervals are **model estimates**, not realized 2026 Q2 
 
 ---
 
-## 5. What I took from the results
+## 5. Interpretation of the results
 
 ### 5.1 Net decline is not the same as store-level closure risk
 
 Binary net decline combines the occurrence of openings/closures with the direction of their balance. Small cells often have no event, causing a zero label even when the available data say little about the risk to an individual shop.
 
-I would not discard the net-decline indicator altogether. It answers a legitimate question about **changes in the local number of stores**. However, it should be displayed alongside **closure rates adjusted for the number of stores**, which address a different question.
+The net-decline label still answers a legitimate question about **changes in the local number of stores**. If a ranking based on it is shown, it should be displayed alongside **closure rates relative to the number of stores**, which address a different question.
 
 ### 5.2 Foot traffic cannot be treated as a simple safety score
 
@@ -480,7 +480,7 @@ That conclusion is about the limits of the observed data and models. It is not p
 
 ### 5.3 Sector and scale interact
 
-The matched mean ATT of −5.57 pp masked a progression from **−13.6 pp in the smallest matched stratum** to **+1.8 pp in the largest** (interval includes zero). Calling Korean restaurants categorically risky or categorically safe would overlook this heterogeneity.
+The matched mean ATT of −5.57 pp does not show the progression from **−13.6 pp in the smallest matched stratum** to **+1.8 pp in the largest** (interval includes zero). Calling Korean restaurants categorically risky or categorically safe would overlook this heterogeneity.
 
 ### 5.4 Area-type sensitivity differs across sectors
 
@@ -494,17 +494,19 @@ A closure model's overall AUC exceeded the store-count baseline only slightly. B
 
 ## 6. Possible operational applications
 
+These proposals are conditional on the assumed use cases described under "The business problem". They are not descriptions of any existing allocation process or funding rule.
+
 ### Proposal 1. Use cell-level scores rather than only sector averages
 
 | Item | Proposal |
 |---|---|
-| Users | District offices allocating small-business consultations or support |
+| Users | District offices, if they allocate small-business consultations or support by risk ranking |
 | Action | Rank candidate cells from `forecast_2026Q2_cell.csv` and select the top K consistent with capacity |
 | Evidence | Top-50 precision **0.780** versus **0.380** by store count; only 4% overlap |
 | Timing | Re-run when the relevant quarter's data are released; the 2026 Q2 file is a historical forecast artifact |
 | Evaluation | Assess actual outcomes after support, ideally against comparable non-supported areas |
 
-A risk score is a **screening tool**, not an estimate of how much a subsidy or consultation will reduce closures. Actual allocation should also consider eligibility, willingness to participate, business needs, and intervention effectiveness.
+A risk score is a **screening tool**, not an estimate of how much a subsidy or consultation will reduce closures. Any actual allocation would also need to consider program eligibility rules, willingness to participate, business needs, and intervention effectiveness.
 
 ### Proposal 2. Discuss foot traffic together with business turnover
 
@@ -521,12 +523,12 @@ Cross-sectional coefficients should not be translated into a precise causal clos
 
 | Item | Proposal |
 |---|---|
-| Users | Operators of public commercial-area dashboards |
+| Users | Operators of public commercial-area dashboards, if they show net-decline rankings (net decline is this project's label, not a published field) |
 | Action | Display net-decline rate and closures relative to stores together, with definitions |
 | Evidence | Sector rank correlation **−0.370**; Korean restaurants first by net decline but tenth (last) by closure rate |
 | Evaluation | Test whether users interpret relative sector risks more accurately |
 
-Seoul's area-change indicator also needs a clear statement of purpose: for this specific next-quarter net-decline screening task, HL had lift **0.937**.
+A clear statement of purpose is also needed wherever Seoul's area-change indicator is used: for this specific next-quarter net-decline screening task, HL had lift **0.937**.
 
 ### Proposal 4. Tailor the first diagnostic questions by sector
 
@@ -636,7 +638,7 @@ Useful presentation files include `forecast_2026Q2_cell.csv` for candidate cells
 | Term | Meaning in this project |
 |---|---|
 | **Cell** | One commercial area × sector × quarter; not an individual shop |
-| **Net decline** | Next-quarter closures exceed next-quarter openings |
+| **Net decline** | Next-quarter closures exceed next-quarter openings (this project's own label, not a published indicator) |
 | **Focus / comparison group** | Korean-restaurant cells / similar cells in other sectors |
 | **Matching covariates** | Store count, pedestrian traffic, polygon area, attracting facilities |
 | **Common support** | Overlapping propensity-score range in which comparisons are feasible |
